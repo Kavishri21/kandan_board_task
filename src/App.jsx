@@ -1,5 +1,6 @@
 import TaskCard from "./components/TaskCard";
 import { useState } from "react";
+import AddTaskForm from "./components/AddTaskForm";
 
 function App() {
 
@@ -30,6 +31,20 @@ function App() {
     }
   ]);
 
+  function addTask(task) {
+    setTasks(function(prev) {
+      return [...prev, task];
+    });
+  }
+
+  function deleteTask(id) {
+    setTasks(function(prev) {
+      return prev.filter(function(task) {
+        return task.id !== id;
+      });
+    });
+  }
+
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       
@@ -37,6 +52,8 @@ function App() {
       <h1 className="text-2xl font-bold mb-6 text-center">
         Kanban Board
       </h1>
+
+      <AddTaskForm addTask={addTask} />
 
       {/* Columns */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -49,7 +66,7 @@ function App() {
               return task.status === "todo";
             })
             .map(function(task) {
-              return <TaskCard key={task.id} task={task} />;
+              return <TaskCard key={task.id} task={task} deleteTask={deleteTask} />;
             })}
         </div>
 
@@ -61,7 +78,7 @@ function App() {
               return task.status === "inprogress";
             })
             .map(function(task) {
-              return <TaskCard key={task.id} task={task} />;
+              return <TaskCard key={task.id} task={task} deleteTask={deleteTask} />;
             })}
         </div>
 
@@ -73,7 +90,7 @@ function App() {
                 return task.status === "done";
               })
               .map(function(task) {
-                return <TaskCard key={task.id} task={task} />;
+                return <TaskCard key={task.id} task={task} deleteTask={deleteTask} />;
               })}
         </div>
 

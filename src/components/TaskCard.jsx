@@ -38,8 +38,10 @@ function TaskCard(props) {
         <button className="text-xs bg-blue-500 text-white px-2 py-1 rounded">
           Edit
         </button>
-        <button className="text-xs bg-red-500 text-white px-2 py-1 rounded">
-          Delete
+        <button onClick={function() {
+            props.deleteTask(task.id);}}
+            className="text-xs bg-red-500 text-white px-2 py-1 rounded">
+            Delete
         </button>
       </div>
 
@@ -47,4 +49,4 @@ function TaskCard(props) {
   );
 }
 
-export default TaskCard;
+export default TaskCard;    
