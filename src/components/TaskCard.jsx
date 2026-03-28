@@ -50,12 +50,16 @@ function TaskCard(props) {
 
       {/* Buttons */}
       <div className="flex gap-2">
-        <button onClick={function() {
+        <button
+            onPointerDown={function(e) { e.stopPropagation(); }} 
+            onClick={function() {
             props.openModal(task);}}
             className="text-xs bg-blue-500 text-white px-2 py-1 rounded">
             Edit
         </button>
-        <button onClick={function() {
+        <button
+            onPointerDown={function(e) { e.stopPropagation(); }}
+             onClick={function() {
             props.deleteTask(task.id);}}
             className="text-xs bg-red-500 text-white px-2 py-1 rounded">
             Delete
