@@ -78,7 +78,7 @@ function AddTaskForm(props) {
 
       <button
         onClick={handleAdd}
-        className="bg-blue-500 text-white px-3 py-1 rounded w-full"
+        className="bg-green-500 text-white px-3 py-1 rounded w-full"
       >
         Add Task
       </button>
