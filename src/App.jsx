@@ -1,55 +1,22 @@
 import TaskCard from "./components/TaskCard";
-import { useState } from "react";
+
 import AddTaskForm from "./components/AddTaskForm";
+import TaskModal from "./components/TaskModal";
+import { useContext } from "react";
+import TaskContext from "./context/TaskContext";
 
 function App() {
+  const { tasks } = useContext(TaskContext);
+  const { addTask } = useContext(TaskContext);
 
-  const [tasks, setTasks] = useState([
-    {
-      id: 1,
-      title: "Build UI",
-      description: "Create layout",
-      status: "todo",
-      tag: "Work",
-      priority: "urgent"
-    },
-    {
-      id: 2,
-      title: "Learn React",
-      description: "Understand hooks",
-      status: "inprogress",
-      tag: "Study",
-      priority: "medium"
-    },
-    {
-      id: 3,
-      title: "Exercise",
-      description: "Go for a walk",
-      status: "done",
-      tag: "Self Care",
-      priority: "low"
-    }
-  ]);
-
-  function addTask(task) {
-    setTasks(function(prev) {
-      return [...prev, task];
-    });
-  }
-
-  function deleteTask(id) {
-    setTasks(function(prev) {
-      return prev.filter(function(task) {
-        return task.id !== id;
-      });
-    });
-  }
+  const { deleteTask, openModal } = useContext(TaskContext);
+  const { selectedTask, updateTask, closeModal } = useContext(TaskContext);
 
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       
       {/* Title */}
-      <h1 className="text-2xl font-bold mb-6 text-center">
+      <h1 className="text-5xl font-bold mb-6 text-center">
         Kanban Board
       </h1>
 
@@ -66,7 +33,7 @@ function App() {
               return task.status === "todo";
             })
             .map(function(task) {
-              return <TaskCard key={task.id} task={task} deleteTask={deleteTask} />;
+              return <TaskCard key={task.id} task={task} deleteTask={deleteTask} openModal={openModal}/>;
             })}
         </div>
 
@@ -78,7 +45,7 @@ function App() {
               return task.status === "inprogress";
             })
             .map(function(task) {
-              return <TaskCard key={task.id} task={task} deleteTask={deleteTask} />;
+              return <TaskCard key={task.id} task={task} deleteTask={deleteTask} openModal={openModal}/>;
             })}
         </div>
 
@@ -90,12 +57,21 @@ function App() {
                 return task.status === "done";
               })
               .map(function(task) {
-                return <TaskCard key={task.id} task={task} deleteTask={deleteTask} />;
+                return <TaskCard key={task.id} task={task} deleteTask={deleteTask} openModal={openModal} />;
               })}
         </div>
 
       </div>
+      {selectedTask && (
+        <TaskModal 
+          task={selectedTask}
+          updateTask={updateTask}
+          closeModal={closeModal}
+          openModal={openModal}
+        />
+      )}
     </div>
+    
   );
 }
 
