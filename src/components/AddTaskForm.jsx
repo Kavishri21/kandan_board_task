@@ -20,7 +20,6 @@ function AddTaskForm(props) {
 
     props.addTask(newTask);
 
-    // clear inputs
     setTitle("");
     setDescription("");
     setTag("Work");
@@ -32,7 +31,6 @@ function AddTaskForm(props) {
 
       <h2 className="font-semibold mb-3">Add Task</h2>
 
-      {/* Title */}
       <input
         type="text"
         placeholder="Task title"
@@ -43,7 +41,6 @@ function AddTaskForm(props) {
         }}
       />
 
-      {/* Description */}
       <input
         type="text"
         placeholder="Description"
@@ -54,7 +51,6 @@ function AddTaskForm(props) {
         }}
       />
 
-      {/* Tag */}
       <select
         className="border p-2 w-full mb-2"
         value={tag}
@@ -68,7 +64,6 @@ function AddTaskForm(props) {
         <option>Others</option>
       </select>
 
-      {/* Priority */}
       <select
         className="border p-2 w-full mb-2"
         value={priority}
@@ -81,7 +76,6 @@ function AddTaskForm(props) {
         <option value="low">Have Time</option>
       </select>
 
-      {/* Button */}
       <button
         onClick={handleAdd}
         className="bg-blue-500 text-white px-3 py-1 rounded w-full"

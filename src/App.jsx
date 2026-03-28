@@ -9,11 +9,7 @@ import { DndContext } from "@dnd-kit/core";
 import Column from "./components/Column";
 
 function App() {
-  const { tasks } = useContext(TaskContext);
-  const { addTask } = useContext(TaskContext);
-
-  const { deleteTask, openModal } = useContext(TaskContext);
-  const { selectedTask, updateTask, closeModal } = useContext(TaskContext);
+  const { tasks, addTask, deleteTask, openModal, selectedTask, updateTask, closeModal } = useContext(TaskContext);
 
   function handleDragEnd(event) {
     const { active, over } = event;
@@ -38,9 +34,8 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-100 p-4">
       
-      {/* Title */}
       <h1 className="text-5xl font-bold mb-6 text-center">
-        Kanban Board
+        Kandan Board
       </h1>
 
       <AddTaskForm addTask={addTask} />

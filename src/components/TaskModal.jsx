@@ -26,10 +26,8 @@ function TaskModal(props) {
         
         <h2 className="font-semibold mb-3">Edit Task</h2>
 
-        {/* Title (readonly) */}
         <p className="text-sm mb-2">{task.title}</p>
 
-        {/* Description */}
         <input
           type="text"
           className="border p-2 w-full mb-2"
@@ -39,7 +37,6 @@ function TaskModal(props) {
           }}
         />
 
-        {/* Status */}
         <select
           className="border p-2 w-full mb-3"
           value={status}
@@ -51,7 +48,6 @@ function TaskModal(props) {
           <option value="done">Done</option>
         </select>
 
-        {/* Buttons */}
         <div className="flex justify-end gap-2">
           <button
             onClick={props.closeModal}
