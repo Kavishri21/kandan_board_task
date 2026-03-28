@@ -1,8 +1,23 @@
+import { useDraggable } from "@dnd-kit/core";
+
 function TaskCard(props) {
   const task = props.task;
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({id: task.id});
+
+  const style = transform
+  ? {
+      transform: "translate(" + transform.x + "px, " + transform.y + "px)"
+    }
+  : undefined;
 
   return (
-    <div className="border p-3 rounded mb-3 bg-gray-50">
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      className="border p-3 rounded mb-3 bg-gray-50 cursor-move"
+    >
 
       {/* Top row */}
       <div className="flex justify-between items-center mb-2">

@@ -5,12 +5,35 @@ import TaskModal from "./components/TaskModal";
 import { useContext } from "react";
 import TaskContext from "./context/TaskContext";
 
+import { DndContext } from "@dnd-kit/core";
+import Column from "./components/Column";
+
 function App() {
   const { tasks } = useContext(TaskContext);
   const { addTask } = useContext(TaskContext);
 
   const { deleteTask, openModal } = useContext(TaskContext);
   const { selectedTask, updateTask, closeModal } = useContext(TaskContext);
+
+  function handleDragEnd(event) {
+    const { active, over } = event;
+
+    if (!over) return;
+
+    const taskId = active.id;
+    const newStatus = over.id;
+
+    const updatedTasks = tasks.map(function(task) {
+      if (task.id === taskId) {
+        return { ...task, status: newStatus };
+      }
+      return task;
+    });
+
+    updatedTasks.forEach(function(task) {
+      updateTask(task);
+    });
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 p-4">
@@ -22,46 +45,41 @@ function App() {
 
       <AddTaskForm addTask={addTask} />
 
-      {/* Columns */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        
-        {/* To Do */}
-        <div className="bg-white p-4 rounded border">
-          <h2 className="font-semibold mb-3">To Do</h2>
-          {tasks
-            .filter(function(task) {
-              return task.status === "todo";
-            })
-            .map(function(task) {
-              return <TaskCard key={task.id} task={task} deleteTask={deleteTask} openModal={openModal}/>;
+      <DndContext onDragEnd={handleDragEnd}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+          <Column
+            title="To Do"
+            status="todo"
+            tasks={tasks.filter(function(t) {
+              return t.status === "todo";
             })}
-        </div>
+            deleteTask={deleteTask}
+            openModal={openModal}
+          />
 
-        {/* In Progress */}
-        <div className="bg-white p-4 rounded border">
-          <h2 className="font-semibold mb-3">In Progress</h2>
-            {tasks
-            .filter(function(task) {
-              return task.status === "inprogress";
-            })
-            .map(function(task) {
-              return <TaskCard key={task.id} task={task} deleteTask={deleteTask} openModal={openModal}/>;
+          <Column
+            title="In Progress"
+            status="inprogress"
+            tasks={tasks.filter(function(t) {
+              return t.status === "inprogress";
             })}
-        </div>
+            deleteTask={deleteTask}
+            openModal={openModal}
+          />
 
-        {/* Done */}
-        <div className="bg-white p-4 rounded border">
-          <h2 className="font-semibold mb-3">Done</h2>
-            {tasks
-              .filter(function(task) {
-                return task.status === "done";
-              })
-              .map(function(task) {
-                return <TaskCard key={task.id} task={task} deleteTask={deleteTask} openModal={openModal} />;
-              })}
-        </div>
+          <Column
+            title="Done"
+            status="done"
+            tasks={tasks.filter(function(t) {
+              return t.status === "done";
+            })}
+            deleteTask={deleteTask}
+            openModal={openModal}
+          />
 
-      </div>
+        </div>
+      </DndContext>
       {selectedTask && (
         <TaskModal 
           task={selectedTask}
