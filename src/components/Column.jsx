@@ -11,20 +11,32 @@ function Column(props) {
   return (
     <div
       ref={setNodeRef}
-      className="bg-white p-4 rounded border min-h-[200px]"
+      className="bg-slate-100/50 p-4 md:p-5 rounded-2xl border border-slate-200 flex flex-col min-h-[500px]"
     >
-      <h2 className="font-semibold mb-3">{title}</h2>
+      <div className="sticky top-0 bg-slate-100/90 backdrop-blur-sm z-10 pb-4 mb-3 flex items-center justify-between border-b border-slate-200/50">
+        <h2 className="font-bold text-slate-700 uppercase tracking-wider text-sm">{title}</h2>
+        <span className="bg-slate-200 text-slate-600 px-2.5 py-0.5 rounded-full text-xs font-semibold">
+          {tasks.length}
+        </span>
+      </div>
 
-      {tasks.map(function(task) {
-        return (
-            <TaskCard
-            key={task.id}
-            task={task}
-            deleteTask={deleteTask}
-            openModal={openModal}
-            />
-        );
-        })}
+      <div className="flex flex-col gap-3">
+        {[...tasks]
+          .sort(function(a, b) {
+            const priorityOrder = { urgent: 1, medium: 2, low: 3 };
+            return (priorityOrder[a.priority] || 4) - (priorityOrder[b.priority] || 4);
+          })
+          .map(function(task) {
+          return (
+              <TaskCard
+              key={task.id}
+              task={task}
+              deleteTask={deleteTask}
+              openModal={openModal}
+              />
+          );
+          })}
+      </div>
     </div>
   );
 }

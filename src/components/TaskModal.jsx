@@ -4,13 +4,15 @@ function TaskModal(props) {
   const task = props.task;
 
   const [description, setDescription] = useState(task.description);
-  const [status, setStatus] = useState(task.status);
+  const [tag, setTag] = useState(task.tag || "Work");
+  const [priority, setPriority] = useState(task.priority || "urgent");
 
   function handleSave() {
     const updatedTask = {
       ...task,
       description: description,
-      status: status
+      tag: tag,
+      priority: priority
     };
 
     props.updateTask(updatedTask);
@@ -20,45 +22,81 @@ function TaskModal(props) {
   if (!task) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex justify-center items-center">
+    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex justify-center items-center z-50 p-4 animate-in fade-in duration-200">
 
-      <div className="bg-white p-4 rounded w-80">
+      <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-md transform transition-all border border-slate-200">
         
-        <h2 className="font-semibold mb-3">Edit Task</h2>
+        <div className="flex justify-between items-center mb-5">
+          <h2 className="font-bold text-slate-800 text-lg tracking-tight">Edit Task</h2>
+          <button 
+            onClick={props.closeModal}
+            className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-1.5 rounded-lg transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
 
-        <p className="text-sm mb-2">{task.title}</p>
+        <div className="mb-4">
+          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Task Title</label>
+          <div className="p-3 bg-slate-50 border border-slate-100 rounded-lg text-slate-700 text-sm font-medium">
+            {task.title}
+          </div>
+        </div>
 
-        <input
-          type="text"
-          className="border p-2 w-full mb-2"
-          value={description}
-          onChange={function(e) {
-            setDescription(e.target.value);
-          }}
-        />
+        <div className="mb-4">
+          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Description</label>
+          <textarea
+            rows="3"
+            className="w-full border border-slate-200 rounded-lg p-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-slate-400 text-slate-600 resize-none"
+            value={description}
+            onChange={function(e) {
+              setDescription(e.target.value);
+            }}
+          ></textarea>
+        </div>
 
-        <select
-          className="border p-2 w-full mb-3"
-          value={status}
-          onChange={function(e) {
-            setStatus(e.target.value);
-          }}>
-          <option value="todo">To Do</option>
-          <option value="inprogress">In Progress</option>
-          <option value="done">Done</option>
-        </select>
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Tag</label>
+            <select
+              className="w-full border border-slate-200 rounded-lg p-3 text-sm focus:border-blue-500 outline-none transition-all text-slate-700 bg-white cursor-pointer"
+              value={tag}
+              onChange={function(e) {
+                setTag(e.target.value);
+              }}>
+              <option>Work</option>
+              <option>Study</option>
+              <option>Self Care</option>
+              <option>Others</option>
+            </select>
+          </div>
 
-        <div className="flex justify-end gap-2">
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Priority</label>
+            <select
+              className="w-full border border-slate-200 rounded-lg p-3 text-sm focus:border-blue-500 outline-none transition-all text-slate-700 bg-white cursor-pointer"
+              value={priority}
+              onChange={function(e) {
+                setPriority(e.target.value);
+              }}>
+              <option value="urgent">Urgent</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
           <button
             onClick={props.closeModal}
-            className="px-2 py-1 border">
+            className="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors">
             Cancel
           </button>
 
           <button
             onClick={handleSave}
-            className="px-2 py-1 bg-blue-500 text-white">
-            Save
+            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow-sm transition-colors">
+            Save Changes
           </button>
         </div>
 
