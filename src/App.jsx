@@ -21,11 +21,9 @@ function App() {
     const taskId = active.id;
     const newStatus = over.id;
 
-    // Find the dragged task and only update if status actually changed
     const draggedTask = tasks.find(function(t) { return t.id === taskId; });
     if (!draggedTask || draggedTask.status === newStatus) return;
 
-    // PATCH /api/tasks/{id}/status — records new status + timestamp in MongoDB
     updateTaskStatus(taskId, newStatus);
   }
 
@@ -54,7 +52,6 @@ function App() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-100 relative">
       
-      {/* Soft Ethereal Mesh Background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute top-[-15%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-blue-300/40 blur-3xl mix-blend-multiply opacity-70 animate-pulse" style={{ animationDuration: '8s' }}></div>
         <div className="absolute top-[10%] right-[-5%] w-[40vw] h-[40vw] rounded-full bg-purple-300/30 blur-3xl mix-blend-multiply opacity-70 animate-pulse" style={{ animationDuration: '12s' }}></div>
