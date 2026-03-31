@@ -6,7 +6,7 @@
 //   add getAuthHeader() and include it in every request.
 // ============================================================
 
-const BASE_URL = "http://localhost:8080/api";
+const BASE_URL = "https://kanban-backend-ljud.onrender.com/api";
 
 // ----------------------------------------------------------------
 // Helper: builds headers for every request
