@@ -13,15 +13,11 @@ function App() {
   const { tasks, addTask, deleteTask, openModal, selectedTask, updateTask, updateTaskStatus, closeModal, loading, error } = useContext(TaskContext);
   const { logout } = useContext(AuthContext);
 
-  // We add 'sensors' so mobile touch screens know when to drag or scroll
   const sensors = useSensors(
     useSensor(MouseSensor, {
-      // For mouse: you have to move the mouse 10px before the task starts dragging
       activationConstraint: { distance: 10 },
     }),
     useSensor(TouchSensor, {
-      // For mobile: you have to press and hold the screen for 250ms to start dragging
-      // This allows the user to still swipe to scroll the page normally
       activationConstraint: { delay: 250, tolerance: 5 },
     })
   );
