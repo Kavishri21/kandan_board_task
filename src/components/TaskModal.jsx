@@ -47,12 +47,16 @@ function TaskModal(props) {
           <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Description</label>
           <textarea
             rows="3"
+            maxLength={200}
             className="w-full border border-slate-200 rounded-lg p-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-slate-400 text-slate-600 resize-none"
             value={description}
             onChange={function(e) {
               setDescription(e.target.value);
             }}
           ></textarea>
+          <div className={`text-right text-xs mt-1 font-medium ${description.length >= 200 ? 'text-red-500' : description.length >= 180 ? 'text-amber-500' : 'text-slate-400'}`}>
+            {description.length} / 200
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4 mb-6">
