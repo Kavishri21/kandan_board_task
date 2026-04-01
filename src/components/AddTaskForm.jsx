@@ -7,7 +7,8 @@ function AddTaskForm(props) {
   const [priority, setPriority] = useState("urgent");
   const [isFormVisible, setIsFormVisible] = useState(false);
 
-  function handleAdd() {
+  function handleAdd(e) {
+    if (e) e.preventDefault();
     if (title.trim() === "") return;
 
     const newTask = {
@@ -41,11 +42,12 @@ function AddTaskForm(props) {
   }
 
   return (
-    <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/50 w-full max-w-2xl mt-4 text-left animate-in slide-in-from-top-4 duration-300">
+    <form onSubmit={handleAdd} className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/50 w-full max-w-2xl mt-4 text-left animate-in slide-in-from-top-4 duration-300">
       
       <div className="flex justify-between items-center mb-6">
         <h2 className="font-bold text-slate-800 text-xl tracking-tight">Create New Task</h2>
         <button 
+          type="button"
           onClick={function() { setIsFormVisible(false); }}
           className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-2 rounded-full transition-colors"
         >
@@ -58,6 +60,7 @@ function AddTaskForm(props) {
           <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Title</label>
           <input
             type="text"
+            autoFocus
             placeholder="What needs to be done?"
             className="w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-slate-400 font-medium text-slate-800"
             value={title}
@@ -120,20 +123,21 @@ function AddTaskForm(props) {
 
       <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-100">
         <button
+          type="button"
           onClick={function() { setIsFormVisible(false); }}
           className="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors"
         >
           Cancel
         </button>
         <button
-          onClick={handleAdd}
+          type="submit"
           className="px-6 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-sm font-medium shadow-sm transition-colors"
         >
           Create Task
         </button>
       </div>
 
-    </div>
+    </form>
   );
 }
 
