@@ -6,12 +6,25 @@ import { useContext } from "react";
 import TaskContext from "./context/TaskContext";
 import AuthContext from "./context/AuthContext";
 
-import { DndContext } from "@dnd-kit/core";
+import { DndContext, TouchSensor, MouseSensor, useSensor, useSensors } from "@dnd-kit/core";
 import Column from "./components/Column";
 
 function App() {
   const { tasks, addTask, deleteTask, openModal, selectedTask, updateTask, updateTaskStatus, closeModal, loading, error } = useContext(TaskContext);
   const { logout } = useContext(AuthContext);
+
+  // We add 'sensors' so mobile touch screens know when to drag or scroll
+  const sensors = useSensors(
+    useSensor(MouseSensor, {
+      // For mouse: you have to move the mouse 10px before the task starts dragging
+      activationConstraint: { distance: 10 },
+    }),
+    useSensor(TouchSensor, {
+      // For mobile: you have to press and hold the screen for 250ms to start dragging
+      // This allows the user to still swipe to scroll the page normally
+      activationConstraint: { delay: 250, tolerance: 5 },
+    })
+  );
 
   function handleDragEnd(event) {
     const { active, over } = event;
@@ -75,7 +88,7 @@ function App() {
           </div>
         </header>
 
-        <DndContext onDragEnd={handleDragEnd}>
+        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
             <Column
