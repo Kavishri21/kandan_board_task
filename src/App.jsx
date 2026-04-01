@@ -61,7 +61,7 @@ function App() {
       <div className="w-full px-4 sm:px-8 xl:px-16 py-10 relative z-10">
         
         <header className="mb-12 flex flex-col items-center justify-center text-center gap-6 relative">
-          <div className="absolute top-0 right-0 sm:right-2">
+          <div className="w-full flex justify-end sm:absolute sm:top-0 sm:right-2 sm:w-auto">
              <button onClick={logout} className="px-4 py-2 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors shadow-sm focus:outline-none">Logout</button>
           </div>
           <div>
