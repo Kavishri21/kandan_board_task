@@ -3,7 +3,8 @@ import AuthContext from "../context/AuthContext";
 
 export default function AuthScreen() {
   const { login, signup } = useContext(AuthContext);
-  const [isLogin, setIsLogin] = useState(true);
+  const [token] = useState(() => new URLSearchParams(window.location.search).get("token"));
+  const [isLogin, setIsLogin] = useState(!token);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,7 +21,7 @@ export default function AuthScreen() {
       if (isLogin) {
         await login(email, password);
       } else {
-        await signup(name, email, password);
+        await signup(name, token ? "" : email, password, token);
       }
     } catch (err) {
       setError(err.message);
@@ -41,10 +42,10 @@ export default function AuthScreen() {
       <div className="bg-white/80 backdrop-blur-xl border border-white/50 p-8 rounded-2xl shadow-xl w-full max-w-md relative z-10 text-center">
         <div className="mb-8">
           <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 pb-1">
-            {isLogin ? "Welcome Back" : "Create Account"}
+            {isLogin ? "Welcome Back" : (token ? "Accept Invite" : "Create Account")}
           </h2>
           <p className="text-slate-500 mt-2 text-sm">
-            {isLogin ? "Sign in to manage your kanban board." : "Sign up to track tasks effortlessly."}
+            {isLogin ? "Sign in to manage your kanban board." : (token ? "Create your password to join the team." : "Sign up to track tasks effortlessly.")}
           </p>
         </div>
 
@@ -69,17 +70,19 @@ export default function AuthScreen() {
             </div>
           )}
 
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              placeholder="you@example.com"
-            />
-          </div>
+          {!token && (
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email</label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                placeholder="you@example.com"
+              />
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-1.5">Password</label>

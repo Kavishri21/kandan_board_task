@@ -26,7 +26,10 @@ export async function registerUser(userData) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(userData)
   });
-  if (!response.ok) throw new Error("Registration failed");
+  if (!response.ok) {
+    const errData = await response.json().catch(() => null);
+    throw new Error((errData && errData.message) || "Registration failed");
+  }
   return response.json();
 }
 

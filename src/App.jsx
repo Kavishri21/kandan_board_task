@@ -2,6 +2,7 @@ import TaskCard from "./components/TaskCard";
 
 import AddTaskForm from "./components/AddTaskForm";
 import TaskModal from "./components/TaskModal";
+import InviteUserForm from "./components/InviteUserForm";
 import { useContext } from "react";
 import TaskContext from "./context/TaskContext";
 import AuthContext from "./context/AuthContext";
@@ -11,7 +12,7 @@ import Column from "./components/Column";
 
 function App() {
   const { tasks, addTask, deleteTask, openModal, selectedTask, updateTask, updateTaskStatus, closeModal, loading, error } = useContext(TaskContext);
-  const { logout } = useContext(AuthContext);
+  const { logout, user } = useContext(AuthContext);
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -79,8 +80,11 @@ function App() {
             </h1>
             <p className="text-base text-slate-500 mt-3 font-medium">Manage your tasks, boost productivity, and track progress effortlessly.</p>
           </div>
-          <div className="w-full flex justify-center relative z-20">
+          <div className="w-full flex justify-center items-center relative z-20 gap-4">
             <AddTaskForm addTask={addTask} />
+            {user?.role && user.role !== 'EMPLOYEE' && user.role !== 'INTERN' && (
+                <InviteUserForm />
+            )}
           </div>
         </header>
 

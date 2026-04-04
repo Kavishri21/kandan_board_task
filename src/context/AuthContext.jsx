@@ -34,9 +34,9 @@ function AuthProvider({ children }) {
     }
   };
 
-  const signup = async (name, email, password) => {
+  const signup = async (name, email, password, token) => {
     try {
-      const data = await registerUser({ name, email, password });
+      const data = await registerUser({ name, email, password, token });
       setToken(data.token);
       setUser(data.user);
       localStorage.setItem("token", data.token);
