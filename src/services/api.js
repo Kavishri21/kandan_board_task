@@ -1,5 +1,5 @@
-
-const BASE_URL = "https://kanban-backend-ljud.onrender.com/api";
+// Uses local backend if running locally (via .env), otherwise falls back to your live Render backend
+const BASE_URL = import.meta.env.VITE_API_URL || "https://kanban-backend-ljud.onrender.com/api";
 
 function getHeaders() {
   const token = localStorage.getItem("token");

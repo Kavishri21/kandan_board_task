@@ -3,7 +3,6 @@ import { useState } from "react";
 function AddTaskForm(props) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [tag, setTag] = useState("Work");
   const [priority, setPriority] = useState("urgent");
   const [isFormVisible, setIsFormVisible] = useState(false);
 
@@ -16,7 +15,6 @@ function AddTaskForm(props) {
       title: title,
       description: description,
       status: "todo",
-      tag: tag,
       priority: priority
     };
 
@@ -24,7 +22,6 @@ function AddTaskForm(props) {
 
     setTitle("");
     setDescription("");
-    setTag("Work");
     setPriority("urgent");
     setIsFormVisible(false);
   }
@@ -87,23 +84,7 @@ function AddTaskForm(props) {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Tag</label>
-            <select
-              className="w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:border-blue-500 outline-none transition-all text-slate-700 bg-white cursor-pointer"
-              value={tag}
-              onChange={function(e) {
-                setTag(e.target.value);
-              }}
-            >
-              <option>Work</option>
-              <option>Study</option>
-              <option>Self Care</option>
-              <option>Others</option>
-            </select>
-          </div>
-
+        <div className="grid grid-cols-1 gap-4">
           <div>
             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Priority</label>
             <select

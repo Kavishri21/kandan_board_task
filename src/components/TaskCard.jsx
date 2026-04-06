@@ -29,9 +29,13 @@ function TaskCard(props) {
     >
 
       <div className="flex justify-between items-start mb-3">
-        <span className="text-[10px] bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">
-          {task.tag}
-        </span>
+        {task.status === "backlog" && task.reason ? (
+          <span className="text-[10px] bg-red-100 text-red-700 px-2.5 py-1 rounded-full font-bold uppercase tracking-wider max-w-[60%] truncate" title={task.reason}>
+            {task.reason}
+          </span>
+        ) : (
+          <div></div>
+        )}
         
         <div className="flex gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
           <button

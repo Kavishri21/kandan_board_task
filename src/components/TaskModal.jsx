@@ -4,7 +4,6 @@ function TaskModal(props) {
   const task = props.task;
 
   const [description, setDescription] = useState(task.description);
-  const [tag, setTag] = useState(task.tag || "Work");
   const [priority, setPriority] = useState(task.priority || "urgent");
 
   function handleSave(e) {
@@ -12,7 +11,6 @@ function TaskModal(props) {
     const updatedTask = {
       ...task,
       description: description,
-      tag: tag,
       priority: priority
     };
 
@@ -61,22 +59,7 @@ function TaskModal(props) {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Tag</label>
-            <select
-              className="w-full border border-slate-200 rounded-lg p-3 text-sm focus:border-blue-500 outline-none transition-all text-slate-700 bg-white cursor-pointer"
-              value={tag}
-              onChange={function(e) {
-                setTag(e.target.value);
-              }}>
-              <option>Work</option>
-              <option>Study</option>
-              <option>Self Care</option>
-              <option>Others</option>
-            </select>
-          </div>
-
+        <div className="grid grid-cols-1 gap-4 mb-6">
           <div>
             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Priority</label>
             <select
