@@ -3,6 +3,7 @@ import TaskCard from "./components/TaskCard";
 import AddTaskForm from "./components/AddTaskForm";
 import TaskModal from "./components/TaskModal";
 import BacklogModal from "./components/BacklogModal";
+import TaskHistoryModal from "./components/TaskHistoryModal";
 import { useContext, useState } from "react";
 import TaskContext from "./context/TaskContext";
 import AuthContext from "./context/AuthContext";
@@ -15,6 +16,7 @@ function App() {
   const { logout } = useContext(AuthContext);
   
   const [pendingBacklogTask, setPendingBacklogTask] = useState(null);
+  const [historyTask, setHistoryTask] = useState(null);
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -102,6 +104,7 @@ function App() {
               })}
               deleteTask={deleteTask}
               openModal={openModal}
+              openHistoryModal={setHistoryTask}
             />
 
             <Column
@@ -112,6 +115,7 @@ function App() {
               })}
               deleteTask={deleteTask}
               openModal={openModal}
+              openHistoryModal={setHistoryTask}
             />
 
             <Column
@@ -122,6 +126,7 @@ function App() {
               })}
               deleteTask={deleteTask}
               openModal={openModal}
+              openHistoryModal={setHistoryTask}
             />
 
             <Column
@@ -132,6 +137,7 @@ function App() {
               })}
               deleteTask={deleteTask}
               openModal={openModal}
+              openHistoryModal={setHistoryTask}
             />
 
           </div>
@@ -155,6 +161,13 @@ function App() {
             updateTaskStatus(updatedTaskProps.id, "backlog");
             setPendingBacklogTask(null);
           }}
+        />
+      )}
+
+      {historyTask && (
+        <TaskHistoryModal
+          task={historyTask}
+          closeModal={function() { setHistoryTask(null); }}
         />
       )}
     </div>

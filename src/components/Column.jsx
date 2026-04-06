@@ -2,7 +2,7 @@ import { useDroppable } from "@dnd-kit/core";
 import TaskCard from "./TaskCard";
 
 function Column(props) {
-  const { title, tasks, status, deleteTask, openModal } = props;
+  const { title, tasks, status, deleteTask, openModal, openHistoryModal } = props;
 
   const { setNodeRef } = useDroppable({
     id: status
@@ -35,6 +35,7 @@ function Column(props) {
               task={task}
               deleteTask={deleteTask}
               openModal={openModal}
+              openHistoryModal={openHistoryModal}
               />
           );
           })}
