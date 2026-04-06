@@ -28,16 +28,12 @@ function TaskCard(props) {
       }
     >
 
-      <div className="flex justify-between items-start mb-3">
-        {task.status === "backlog" && task.reason ? (
-          <span className="text-[10px] bg-red-100 text-red-700 px-2.5 py-1 rounded-full font-bold uppercase tracking-wider max-w-[60%] truncate" title={task.reason}>
-            {task.reason}
-          </span>
-        ) : (
-          <div></div>
-        )}
+      <div className="flex justify-between items-start mb-2">
+        <h3 className="font-bold text-slate-800 text-lg leading-snug truncate pr-2" title={task.title}>
+          {task.title}
+        </h3>
         
-        <div className="flex gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
+        <div className="flex gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 shrink-0">
           <button
               onPointerDown={function(e) { e.stopPropagation(); }} 
               onClick={function() { props.openModal(task); }}
@@ -55,10 +51,16 @@ function TaskCard(props) {
         </div>
       </div>
 
-      <h3 className="font-bold text-slate-800 text-lg mb-1.5 leading-snug">{task.title}</h3>
       <p className="text-sm text-slate-600 line-clamp-3 leading-relaxed">
         {task.description}
       </p>
+
+      {task.status === "backlog" && task.reason && (
+        <div className="mt-3 pt-3 border-t border-slate-100">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-red-500 mb-1 block">Reason</span>
+          <p className="text-xs text-slate-600 italic line-clamp-2">"{task.reason}"</p>
+        </div>
+      )}
 
     </div>
   );
