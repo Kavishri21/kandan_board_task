@@ -157,9 +157,10 @@ function App() {
           task={pendingBacklogTask}
           closeModal={function() { setPendingBacklogTask(null); }}
           onSave={function(updatedTaskProps) {
-            updateTask(updatedTaskProps);
-            updateTaskStatus(updatedTaskProps.id, "backlog");
-            setPendingBacklogTask(null);
+            updateTask(updatedTaskProps).then(() => {
+              updateTaskStatus(updatedTaskProps.id, "backlog");
+              setPendingBacklogTask(null);
+            });
           }}
         />
       )}

@@ -70,7 +70,7 @@ function TaskProvider(props) {
   // Updates title, description, tag, priority
   // ----------------------------------------------------------------
   function updateTask(updatedTask) {
-    apiUpdateTask(updatedTask.id, updatedTask)
+    return apiUpdateTask(updatedTask.id, updatedTask)
       .then(function (savedTask) {
         setTasks(function (prev) {
           return prev.map(function (task) {
@@ -80,9 +80,11 @@ function TaskProvider(props) {
             return task;
           });
         });
+        return savedTask;
       })
       .catch(function (err) {
         console.error("Failed to update task:", err);
+        throw err;
       });
   }
 
@@ -102,7 +104,7 @@ function TaskProvider(props) {
       });
     });
 
-    apiUpdateTaskStatus(taskId, newStatus)
+    return apiUpdateTaskStatus(taskId, newStatus)
       .then(function (savedTask) {
         // Sync with what the backend actually saved (includes updatedAt)
         setTasks(function (prev) {

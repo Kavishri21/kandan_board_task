@@ -77,6 +77,11 @@ function TaskHistoryModal(props) {
                         <span className={`px-2.5 py-1 text-xs font-bold rounded-md border ${statusColors[historyItem.status] || "bg-slate-100 text-slate-700"}`}>
                           {getStatusLabel(historyItem.status)}
                         </span>
+                        {historyItem.status === "backlog" && historyItem.reason && (
+                          <span className="text-slate-500 italic ml-2 text-xs truncate max-w-[200px] inline-block align-bottom" title={historyItem.reason}>
+                            ({historyItem.reason})
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right font-medium text-slate-500">
                         {formatTime(historyItem.changedAt)}
