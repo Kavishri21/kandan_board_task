@@ -3,7 +3,7 @@ import { useState } from "react";
 function AddTaskForm(props) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [priority, setPriority] = useState("urgent");
+  const [priority, setPriority] = useState("high");
   const [isFormVisible, setIsFormVisible] = useState(false);
 
   function handleAdd(e) {
@@ -22,7 +22,7 @@ function AddTaskForm(props) {
 
     setTitle("");
     setDescription("");
-    setPriority("urgent");
+    setPriority("high");
     setIsFormVisible(false);
   }
 
@@ -94,7 +94,7 @@ function AddTaskForm(props) {
                 setPriority(e.target.value);
               }}
             >
-              <option value="urgent">Urgent</option>
+              <option value="high">High</option>
               <option value="medium">Medium</option>
               <option value="low">Low</option>
             </select>

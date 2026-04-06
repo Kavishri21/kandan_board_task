@@ -5,7 +5,7 @@ function TaskModal(props) {
 
   const [description, setDescription] = useState(task.description || "");
   const [reason, setReason] = useState(task.reason || "");
-  const [priority, setPriority] = useState(task.priority || "urgent");
+  const [priority, setPriority] = useState(task.priority || "high");
 
   const textareaRef = useRef(null);
 
@@ -55,12 +55,26 @@ function TaskModal(props) {
           </div>
         </div>
 
-        {task.status === "backlog" ? (
+        <div className="mb-6">
+          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Description</label>
+          <textarea
+            ref={textareaRef}
+            className="w-full border border-slate-200 rounded-lg p-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-slate-400 resize-none overflow-hidden text-slate-700 min-h-[100px]"
+            maxLength={200}
+            placeholder="Add more details about this task..."
+            value={description}
+            onChange={function(e) { setDescription(e.target.value); }}
+          />
+          <div className={`text-right text-xs mt-1 font-medium ${200 - description.length === 0 ? "text-red-500" : "text-slate-400"}`}>
+            {200 - description.length} characters left
+          </div>
+        </div>
+
+        {task.status === "backlog" && (
           <div className="mb-6">
             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Reason for Backlog</label>
             <textarea
-              ref={textareaRef}
-              className="w-full border border-slate-200 rounded-lg p-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-slate-400 resize-none overflow-hidden text-slate-700 min-h-[100px]"
+              className="w-full border border-slate-200 rounded-lg p-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-slate-400 resize-none overflow-hidden text-slate-700 min-h-[80px]"
               maxLength={100}
               placeholder="Why was this dropped in the backlog?"
               value={reason}
@@ -68,21 +82,6 @@ function TaskModal(props) {
             />
             <div className={`text-right text-xs mt-1 font-medium ${100 - reason.length === 0 ? "text-red-500" : "text-slate-400"}`}>
               {100 - reason.length} characters left
-            </div>
-          </div>
-        ) : (
-          <div className="mb-6">
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Description</label>
-            <textarea
-              ref={textareaRef}
-              className="w-full border border-slate-200 rounded-lg p-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-slate-400 resize-none overflow-hidden text-slate-700 min-h-[100px]"
-              maxLength={200}
-              placeholder="Add more details about this task..."
-              value={description}
-              onChange={function(e) { setDescription(e.target.value); }}
-            />
-            <div className={`text-right text-xs mt-1 font-medium ${200 - description.length === 0 ? "text-red-500" : "text-slate-400"}`}>
-              {200 - description.length} characters left
             </div>
           </div>
         )}
@@ -96,7 +95,7 @@ function TaskModal(props) {
               onChange={function(e) {
                 setPriority(e.target.value);
               }}>
-              <option value="urgent">Urgent</option>
+              <option value="high">High</option>
               <option value="medium">Medium</option>
               <option value="low">Low</option>
             </select>

@@ -25,7 +25,7 @@ function Column(props) {
       <div className="flex flex-col gap-3">
         {[...tasks]
           .sort(function(a, b) {
-            const priorityOrder = { urgent: 1, medium: 2, low: 3 };
+            const priorityOrder = { high: 1, medium: 2, low: 3 };
             return (priorityOrder[a.priority] || 4) - (priorityOrder[b.priority] || 4);
           })
           .map(function(task) {

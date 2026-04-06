@@ -20,7 +20,7 @@ function TaskCard(props) {
       {...attributes}
       className={
         "bg-white p-4 rounded-xl border border-slate-200 mb-3 shadow-sm hover:shadow-md transition-all duration-200 cursor-grab active:cursor-grabbing group border-l-4 " +
-        (task.priority === "urgent"
+        (task.priority === "high"
           ? "border-l-red-500"
           : task.priority === "medium"
           ? "border-l-amber-400"

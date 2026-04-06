@@ -4,18 +4,24 @@ function BacklogModal(props) {
   const task = props.task;
 
   const [title, setTitle] = useState(task.title);
+  const [description, setDescription] = useState(task.description || "");
   const [reason, setReason] = useState(""); // Always starts empty as requested!
-  const [priority, setPriority] = useState(task.priority || "urgent");
+  const [priority, setPriority] = useState(task.priority || "high");
 
   const textareaRef = useRef(null);
+  const descRef = useRef(null);
 
-  // Auto-resize textarea
+  // Auto-resize textareas
   useEffect(function() {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
     }
-  }, [reason]);
+    if (descRef.current) {
+      descRef.current.style.height = "auto";
+      descRef.current.style.height = descRef.current.scrollHeight + "px";
+    }
+  }, [reason, description]);
 
   function handleSave(e) {
     if (e) e.preventDefault();
@@ -24,6 +30,7 @@ function BacklogModal(props) {
     props.onSave({
       ...task,
       title: title,
+      description: description,
       reason: reason,
       priority: priority,
     });
@@ -61,11 +68,22 @@ function BacklogModal(props) {
           </div>
 
           <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Description</label>
+            <textarea
+              ref={descRef}
+              className="w-full border border-slate-200 rounded-lg p-3 text-sm focus:border-red-500 outline-none transition-all text-slate-700 font-medium bg-slate-50 resize-none overflow-hidden"
+              value={description}
+              onChange={function(e) { setDescription(e.target.value); }}
+              placeholder="Add more details about this task..."
+            />
+          </div>
+
+          <div>
             <label className="block text-xs font-bold text-red-600 uppercase tracking-wider mb-1.5">Reason for Backlog</label>
             <textarea
               ref={textareaRef}
               autoFocus
-              className="w-full border border-red-200 rounded-lg p-3 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-100 outline-none transition-all placeholder:text-red-300 resize-none overflow-hidden text-slate-700 min-h-[100px]"
+              className="w-full border border-red-200 rounded-lg p-3 text-sm focus:border-red-500 focus:ring-2 focus:ring-red-100 outline-none transition-all placeholder:text-red-300 resize-none overflow-hidden text-slate-700 min-h-[80px]"
               maxLength={100}
               placeholder="Why is this task blocked or delayed...?"
               value={reason}
@@ -82,10 +100,9 @@ function BacklogModal(props) {
               className="w-full border border-slate-200 rounded-lg p-3 text-sm focus:border-red-500 outline-none transition-all text-slate-700 bg-white cursor-pointer"
               value={priority}
               onChange={function(e) { setPriority(e.target.value); }}>
-              <option value="urgent">🔴 Urgent</option>
-              <option value="high">🟠 High</option>
-              <option value="medium">🟡 Medium</option>
-              <option value="low">🟢 Low</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
             </select>
           </div>
         </div>
