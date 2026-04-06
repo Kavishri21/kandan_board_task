@@ -2,7 +2,8 @@ import TaskCard from "./components/TaskCard";
 
 import AddTaskForm from "./components/AddTaskForm";
 import TaskModal from "./components/TaskModal";
-import { useContext } from "react";
+import BacklogModal from "./components/BacklogModal";
+import { useContext, useState } from "react";
 import TaskContext from "./context/TaskContext";
 import AuthContext from "./context/AuthContext";
 
@@ -12,6 +13,8 @@ import Column from "./components/Column";
 function App() {
   const { tasks, addTask, deleteTask, openModal, selectedTask, updateTask, updateTaskStatus, closeModal, loading, error } = useContext(TaskContext);
   const { logout } = useContext(AuthContext);
+  
+  const [pendingBacklogTask, setPendingBacklogTask] = useState(null);
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -33,7 +36,11 @@ function App() {
     const draggedTask = tasks.find(function(t) { return t.id === taskId; });
     if (!draggedTask || draggedTask.status === newStatus) return;
 
-    updateTaskStatus(taskId, newStatus);
+    if (newStatus === "backlog") {
+      setPendingBacklogTask(draggedTask);
+    } else {
+      updateTaskStatus(taskId, newStatus);
+    }
   }
 
   if (loading) {
@@ -85,7 +92,7 @@ function App() {
         </header>
 
         <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
 
             <Column
               title="To Do"
@@ -117,6 +124,16 @@ function App() {
               openModal={openModal}
             />
 
+            <Column
+              title="Backlog"
+              status="backlog"
+              tasks={tasks.filter(function(t) {
+                return t.status === "backlog";
+              })}
+              deleteTask={deleteTask}
+              openModal={openModal}
+            />
+
           </div>
         </DndContext>
       </div>
@@ -126,7 +143,18 @@ function App() {
           task={selectedTask}
           updateTask={updateTask}
           closeModal={closeModal}
-          openModal={openModal}
+        />
+      )}
+
+      {pendingBacklogTask && (
+        <BacklogModal
+          task={pendingBacklogTask}
+          closeModal={function() { setPendingBacklogTask(null); }}
+          onSave={function(updatedTaskProps) {
+            updateTask(updatedTaskProps);
+            updateTaskStatus(updatedTaskProps.id, "backlog");
+            setPendingBacklogTask(null);
+          }}
         />
       )}
     </div>

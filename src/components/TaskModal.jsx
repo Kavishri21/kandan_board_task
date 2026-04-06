@@ -1,16 +1,28 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
 function TaskModal(props) {
   const task = props.task;
 
-  const [description, setDescription] = useState(task.description);
+  const [description, setDescription] = useState(task.description || "");
+  const [reason, setReason] = useState(task.reason || "");
   const [priority, setPriority] = useState(task.priority || "urgent");
+
+  const textareaRef = useRef(null);
+
+  // Auto-resize description/reason textarea automatically
+  useEffect(function() {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+    }
+  }, [description, reason]);
 
   function handleSave(e) {
     if (e) e.preventDefault();
     const updatedTask = {
       ...task,
       description: description,
+      reason: reason,
       priority: priority
     };
 
@@ -43,21 +55,37 @@ function TaskModal(props) {
           </div>
         </div>
 
-        <div className="mb-4">
-          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Description</label>
-          <textarea
-            rows="3"
-            maxLength={200}
-            className="w-full border border-slate-200 rounded-lg p-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-slate-400 text-slate-600 resize-none"
-            value={description}
-            onChange={function(e) {
-              setDescription(e.target.value);
-            }}
-          ></textarea>
-          <div className={`text-right text-xs mt-1 font-medium ${description.length >= 200 ? 'text-red-500' : description.length >= 180 ? 'text-amber-500' : 'text-slate-400'}`}>
-            {description.length} / 200
+        {task.status === "backlog" ? (
+          <div className="mb-6">
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Reason for Backlog</label>
+            <textarea
+              ref={textareaRef}
+              className="w-full border border-slate-200 rounded-lg p-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-slate-400 resize-none overflow-hidden text-slate-700 min-h-[100px]"
+              maxLength={100}
+              placeholder="Why was this dropped in the backlog?"
+              value={reason}
+              onChange={function(e) { setReason(e.target.value); }}
+            />
+            <div className={`text-right text-xs mt-1 font-medium ${100 - reason.length === 0 ? "text-red-500" : "text-slate-400"}`}>
+              {100 - reason.length} characters left
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="mb-6">
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Description</label>
+            <textarea
+              ref={textareaRef}
+              className="w-full border border-slate-200 rounded-lg p-3 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-slate-400 resize-none overflow-hidden text-slate-700 min-h-[100px]"
+              maxLength={200}
+              placeholder="Add more details about this task..."
+              value={description}
+              onChange={function(e) { setDescription(e.target.value); }}
+            />
+            <div className={`text-right text-xs mt-1 font-medium ${200 - description.length === 0 ? "text-red-500" : "text-slate-400"}`}>
+              {200 - description.length} characters left
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 gap-4 mb-6">
           <div>
