@@ -1,8 +1,9 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import AuthContext from "../context/AuthContext";
+import { validateInviteToken, acceptInvitation } from "../services/api";
 
 export default function AuthScreen() {
-  const { login, signup } = useContext(AuthContext);
+  const { login, signup, setUserFromInvite } = useContext(AuthContext);
   const [isLogin, setIsLogin] = useState(true);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -10,6 +11,33 @@ export default function AuthScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // --- Invite Accept State ---
+  const [inviteToken, setInviteToken] = useState(null);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteName, setInviteName] = useState("");
+  const [inviteError, setInviteError] = useState("");
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [tokenValidating, setTokenValidating] = useState(false);
+
+  // On mount: check if URL has ?token= (invite link)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    if (token) {
+      setInviteToken(token);
+      setTokenValidating(true);
+      validateInviteToken(token)
+        .then((data) => {
+          setInviteEmail(data.email);
+          setInviteName(data.name);
+        })
+        .catch((err) => {
+          setInviteError(err.message);
+        })
+        .finally(() => setTokenValidating(false));
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,6 +56,92 @@ export default function AuthScreen() {
       setIsLoading(false);
     }
   };
+
+  // --- Accept Invite Handler ---
+  async function handleAcceptInvite(e) {
+    e.preventDefault();
+    if (!password.trim()) {
+      setInviteError("Please enter a password.");
+      return;
+    }
+    setInviteLoading(true);
+    setInviteError("");
+    try {
+      const data = await acceptInvitation(inviteToken, password);
+      // Store token and user just like a normal login
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      // Remove the token from the URL cleanly
+      window.history.replaceState({}, document.title, window.location.pathname);
+      // Force page reload so AuthContext picks up the new token
+      window.location.reload();
+    } catch (err) {
+      setInviteError(err.message);
+    } finally {
+      setInviteLoading(false);
+    }
+  }
+
+  // --- Invite Accept UI ---
+  if (inviteToken) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md text-center border border-slate-200">
+          <div className="mb-8">
+            <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg>
+            </div>
+            <h2 className="text-2xl font-extrabold text-blue-700">You're invited!</h2>
+            <p className="text-slate-500 mt-2 text-sm">
+              {inviteName ? `Hi ${inviteName}, set` : "Set"} a password to join Kanban Board.
+            </p>
+          </div>
+
+          {tokenValidating && (
+            <div className="flex justify-center py-6">
+              <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          )}
+
+          {inviteError && !tokenValidating && (
+            <div className="mb-5 p-3 rounded-lg bg-red-50 text-red-600 text-sm border border-red-100 font-medium">
+              {inviteError}
+            </div>
+          )}
+
+          {!tokenValidating && !inviteError && (
+            <form onSubmit={handleAcceptInvite} className="space-y-5 text-left">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email</label>
+                <div className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-slate-600 text-sm">
+                  {inviteEmail}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Set Password</label>
+                <input
+                  type="password"
+                  required
+                  autoFocus
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  placeholder="Choose a password"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={inviteLoading}
+                className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm transition-all disabled:opacity-70 disabled:cursor-not-allowed mt-2"
+              >
+                {inviteLoading ? "Setting up your account..." : "Set Password & Join"}
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 relative overflow-hidden">

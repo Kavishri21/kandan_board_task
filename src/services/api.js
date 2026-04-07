@@ -80,3 +80,35 @@ export async function deleteTask(id) {
   });
   if (!response.ok) throw new Error("Failed to delete task");
 }
+
+// --- Invitation APIs ---
+
+export async function sendInvitation(name, email) {
+  const response = await fetch(`${BASE_URL}/invitations`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify({ name, email }),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message || "Failed to send invitation");
+  return data;
+}
+
+export async function validateInviteToken(token) {
+  const response = await fetch(`${BASE_URL}/invitations/validate?token=${token}`);
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message || "Invalid invitation link");
+  return data;
+}
+
+export async function acceptInvitation(token, password) {
+  const response = await fetch(`${BASE_URL}/invitations/accept`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, password }),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message || "Failed to accept invitation");
+  return data;
+}
+
