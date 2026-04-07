@@ -9,6 +9,7 @@ import TaskContext from "./context/TaskContext";
 import AuthContext from "./context/AuthContext";
 
 import { DndContext, TouchSensor, MouseSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import Column from "./components/Column";
 
 function App() {
@@ -118,7 +119,7 @@ function App() {
           </div>
         </header>
 
-        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+        <DndContext sensors={sensors} onDragEnd={handleDragEnd} modifiers={[restrictToWindowEdges]}>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
 
             <Column
