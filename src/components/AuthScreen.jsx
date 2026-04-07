@@ -31,16 +31,9 @@ export default function AuthScreen() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Soft Ethereal Mesh Background */}
-      <div className="absolute inset-0 pointer-events-none z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-blue-300/40 blur-3xl mix-blend-multiply opacity-70 animate-pulse" style={{ animationDuration: '8s' }}></div>
-        <div className="absolute top-[20%] right-[-5%] w-[40vw] h-[40vw] rounded-full bg-purple-300/30 blur-3xl mix-blend-multiply opacity-70 animate-pulse" style={{ animationDuration: '12s' }}></div>
-        <div className="absolute bottom-[-10%] left-[15%] w-[60vw] h-[60vw] rounded-full bg-indigo-200/40 blur-3xl mix-blend-multiply opacity-70 animate-pulse" style={{ animationDuration: '10s' }}></div>
-      </div>
-
-      <div className="bg-white/80 backdrop-blur-xl border border-white/50 p-8 rounded-2xl shadow-xl w-full max-w-md relative z-10 text-center">
+      <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md relative z-10 text-center border border-slate-200">
         <div className="mb-8">
-          <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 pb-1">
+          <h2 className="text-3xl font-extrabold text-blue-700 pb-1">
             {isLogin ? "Welcome Back" : "Create Account"}
           </h2>
           <p className="text-slate-500 mt-2 text-sm">
@@ -110,7 +103,7 @@ export default function AuthScreen() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-lg shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed mt-4"
+            className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-sm hover:shadow transition-all disabled:opacity-70 disabled:cursor-not-allowed mt-4"
           >
             {isLoading ? "Please wait..." : (isLogin ? "Sign In" : "Sign Up")}
           </button>

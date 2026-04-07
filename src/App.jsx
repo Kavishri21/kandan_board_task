@@ -68,27 +68,52 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-100 relative">
+    <div className="flex h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-100 overflow-x-hidden w-full">
       
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute top-[-15%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-blue-300/40 blur-3xl mix-blend-multiply opacity-70 animate-pulse" style={{ animationDuration: '8s' }}></div>
-        <div className="absolute top-[10%] right-[-5%] w-[40vw] h-[40vw] rounded-full bg-purple-300/30 blur-3xl mix-blend-multiply opacity-70 animate-pulse" style={{ animationDuration: '12s' }}></div>
-        <div className="absolute bottom-[-15%] left-[15%] w-[60vw] h-[60vw] rounded-full bg-indigo-200/40 blur-3xl mix-blend-multiply opacity-70 animate-pulse" style={{ animationDuration: '10s' }}></div>
-      </div>
-
-      <div className="w-full px-4 sm:px-8 xl:px-16 py-10 relative z-10">
-        
-        <header className="mb-12 flex flex-col items-center justify-center text-center gap-6 relative">
-          <div className="w-full flex justify-end sm:absolute sm:top-0 sm:right-2 sm:w-auto">
-             <button onClick={logout} className="px-4 py-2 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors shadow-sm focus:outline-none">Logout</button>
+      {/* Fixed Sidebar */}
+      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col pt-8 pb-6 px-4 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-20 shrink-0 hidden md:flex">
+        <div className="px-3 mb-8">
+          <div className="flex items-center gap-3 text-blue-700 font-bold text-lg tracking-tight">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+            Kanban Board
           </div>
+        </div>
+
+        {/* <div className="flex-1 flex flex-col gap-2">
+          <button className="flex items-center gap-3 px-3 py-2.5 bg-blue-50 text-blue-700 rounded-xl font-medium w-full text-left transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+            Dashboard
+          </button>
+        </div> */}
+
+        <button 
+          onClick={logout} 
+          className="mt-auto flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl font-medium transition-colors w-full text-left"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+          Logout
+        </button>
+      </aside>
+
+      {/* Main Kanban Content Area */}
+      <main className="flex-1 overflow-x-hidden overflow-y-auto px-4 sm:px-8 xl:px-12 py-8 relative z-10 focus:outline-none">
+        
+        {/* Mobile Header (Shows only on small screens) */}
+        <div className="md:hidden flex justify-between items-center mb-6">
+          <div className="font-bold text-blue-700 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+            Kanban
+          </div>
+          <button onClick={logout} className="text-sm font-bold text-slate-500 p-2">Logout</button>
+        </div>
+
+        <header className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 pb-2 drop-shadow-sm">
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-800">
               Kanban Dashboard
             </h1>
-            <p className="text-base text-slate-500 mt-3 font-medium">Manage your tasks, boost productivity, and track progress effortlessly.</p>
           </div>
-          <div className="w-full flex justify-center relative z-20">
+          <div className="flex shrink-0">
             <AddTaskForm addTask={addTask} />
           </div>
         </header>
@@ -142,7 +167,7 @@ function App() {
 
           </div>
         </DndContext>
-      </div>
+      </main>
 
       {selectedTask && (
         <TaskModal 
