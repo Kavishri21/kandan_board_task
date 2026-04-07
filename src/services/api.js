@@ -15,7 +15,12 @@ export async function loginUser(credentials) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(credentials)
   });
-  if (!response.ok) throw new Error("Login failed");
+  if (!response.ok) {
+    if (response.status >= 400 && response.status < 500) {
+      throw new Error("Invalid email or password.");
+    }
+    throw new Error("Login failed. Please try again later.");
+  }
   return response.json();
 }
 
