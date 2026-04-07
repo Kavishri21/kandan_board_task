@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 
 function AddTaskForm(props) {
   const [title, setTitle] = useState("");
@@ -42,8 +43,8 @@ function AddTaskForm(props) {
         Add Task
       </button>
 
-      {isFormVisible && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex justify-center items-center z-50 p-4 animate-in fade-in duration-200 text-left">
+      {isFormVisible && createPortal(
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex justify-center items-center z-[100] p-4 text-left">
           <form onSubmit={handleAdd} className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-md transform transition-all border border-slate-200">
       
       <div className="flex justify-between items-center mb-4">
@@ -137,7 +138,8 @@ function AddTaskForm(props) {
         </div>
 
           </form>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

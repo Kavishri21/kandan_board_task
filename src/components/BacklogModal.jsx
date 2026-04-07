@@ -39,7 +39,7 @@ function BacklogModal(props) {
   const remainingChars = 100 - reason.length;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-center z-50 p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex justify-center items-center z-[100] p-4 animate-in fade-in duration-200">
       <form onSubmit={handleSave} className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md transform transition-all border border-red-200/50">
         
         <div className="flex justify-between items-center mb-5">

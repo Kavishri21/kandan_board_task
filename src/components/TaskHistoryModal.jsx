@@ -37,7 +37,7 @@ function TaskHistoryModal(props) {
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex justify-center items-center z-50 p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex justify-center items-center z-[100] p-4 animate-in fade-in duration-200">
       <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-2xl transform transition-all border border-slate-200">
         
         <div className="flex justify-between items-center mb-6">
