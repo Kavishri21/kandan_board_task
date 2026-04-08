@@ -3,6 +3,7 @@ const BASE_URL = import.meta.env.VITE_API_URL || "https://kanban-backend-ljud.on
 
 function getHeaders() {
   const token = localStorage.getItem("token");
+  console.log("Sending Token:", token);
   return {
     "Content-Type": "application/json",
     ...(token ? { "Authorization": `Bearer ${token}` } : {})
@@ -93,6 +94,16 @@ export async function sendInvitation(name, email) {
   if (!response.ok) throw new Error(data.message || "Failed to send invitation");
   return data;
 }
+
+export async function fetchMembers() {
+  const response = await fetch(`${BASE_URL}/users`, {
+    method: "GET",
+    headers: getHeaders(),
+  });
+  if (!response.ok) throw new Error("Failed to fetch members");
+  return response.json();
+}
+
 
 export async function validateInviteToken(token) {
   const response = await fetch(`${BASE_URL}/invitations/validate?token=${token}`);

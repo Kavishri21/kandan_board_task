@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { sendInvitation } from "../services/api";
+import { useState, useEffect } from "react";
+import { sendInvitation, fetchMembers } from "../services/api";
 
 export default function UsersPage() {
   const [showAddForm, setShowAddForm] = useState(false);
@@ -8,6 +8,26 @@ export default function UsersPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+
+  const [members, setMembers] = useState([]);
+  const [membersLoading, setMembersLoading] = useState(true);
+
+  // Load members on mount
+  useEffect(() => {
+    loadMembers();
+  }, []);
+
+  async function loadMembers() {
+    setMembersLoading(true);
+    try {
+      const data = await fetchMembers();
+      setMembers(data);
+    } catch (err) {
+      // silently fail — table will just show empty
+    } finally {
+      setMembersLoading(false);
+    }
+  }
 
   async function handleInvite(e) {
     e.preventDefault();
@@ -122,11 +142,28 @@ export default function UsersPage() {
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td colSpan="2" className="text-center py-10 text-slate-400 text-sm">
-                No members yet. Send your first invite above!
-              </td>
-            </tr>
+            {membersLoading ? (
+              <tr>
+                <td colSpan="2" className="text-center py-10">
+                  <div className="w-6 h-6 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                </td>
+              </tr>
+            ) : members.length === 0 ? (
+              <tr>
+                <td colSpan="2" className="text-center py-10 text-slate-400 text-sm">
+                  No members yet. Send your first invite above!
+                </td>
+              </tr>
+            ) : (
+              members.map((member) => (
+                <tr key={member.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
+                  <td className="px-6 py-4 font-medium text-slate-800">
+                    {member.name}
+                  </td>
+                  <td className="px-6 py-4 text-slate-500">{member.email}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

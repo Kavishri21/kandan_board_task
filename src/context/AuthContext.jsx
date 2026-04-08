@@ -53,11 +53,19 @@ function AuthProvider({ children }) {
     localStorage.removeItem("user");
   };
 
+  const setUserFromInvite = (userData, userToken) => {
+    setToken(userToken);
+    setUser(userData);
+    localStorage.setItem("token", userToken);
+    localStorage.setItem("user", JSON.stringify(userData));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, signup, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, signup, logout, setUserFromInvite }}>
       {children}
     </AuthContext.Provider>
   );
+
 }
 
 export { AuthProvider };
