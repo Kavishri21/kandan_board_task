@@ -1,7 +1,53 @@
 import { useState, useEffect, useContext } from "react";
+import { createPortal } from "react-dom";
 import { sendInvitation, fetchMembers, toggleUserStatus, deleteUser } from "../services/api";
 import AuthContext from "../context/AuthContext";
 import { toast } from "react-toastify";
+
+function DeleteConfirmationModal({ isOpen, onCancel, onConfirm, memberName, isLoading }) {
+  if (!isOpen) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex justify-center items-center z-[110] p-4 text-left animate-in fade-in duration-200">
+      <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm transform transition-all border border-slate-200 animate-in zoom-in-95 duration-200">
+        <div className="flex items-center gap-3 mb-4 text-red-600">
+          <div className="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          </div>
+          <h3 className="text-lg font-bold text-slate-800">Delete User?</h3>
+        </div>
+        
+        <p className="text-slate-600 text-sm mb-6 leading-relaxed">
+          Are you sure you want to delete <span className="font-semibold text-slate-800">{memberName}</span>? 
+          This action cannot be undone and all their tasks will be unassigned.
+        </p>
+
+        <div className="flex gap-3 justify-end">
+          <button
+            onClick={onCancel}
+            disabled={isLoading}
+            className="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isLoading}
+            className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium shadow-sm transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
+          >
+            {isLoading ? (
+              <>
+                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Deleting...
+              </>
+            ) : "Delete User"}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
 
 export default function UsersPage() {
   const { user: currentUser } = useContext(AuthContext);
@@ -12,6 +58,11 @@ export default function UsersPage() {
 
   const [members, setMembers] = useState([]);
   const [membersLoading, setMembersLoading] = useState(true);
+
+  // Delete modal state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [memberToDelete, setMemberToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Load members on mount
   useEffect(() => {
@@ -51,7 +102,6 @@ export default function UsersPage() {
   }
 
   async function handleToggleStatus(member) {
-    // 1. Block self-deactivation
     if (member.email === currentUser?.email) {
       toast.error("You cannot deactivate your own account.");
       return;
@@ -66,35 +116,47 @@ export default function UsersPage() {
     }
   }
 
-  async function handleDelete(member) {
-    // 1. Block self-deletion
+  function confirmDelete(member) {
     if (member.email === currentUser?.email) {
       toast.error("You cannot delete your own account.");
       return;
     }
+    setMemberToDelete(member);
+    setShowDeleteModal(true);
+  }
 
-    if (!window.confirm(`Are you sure you want to delete ${member.name}? This will unassign any tasks they have.`)) {
-      return;
-    }
-
+  async function handleActualDelete() {
+    if (!memberToDelete) return;
+    
+    setIsDeleting(true);
     try {
-      await deleteUser(member.id);
-      setMembers(prev => prev.filter(m => m.id !== member.id));
+      await deleteUser(memberToDelete.id);
+      setMembers(prev => prev.filter(m => m.id !== memberToDelete.id));
       toast.success("User deleted successfully.");
+      setShowDeleteModal(false);
     } catch (err) {
       toast.error("Failed to delete user.");
+    } finally {
+      setIsDeleting(false);
+      setMemberToDelete(null);
     }
   }
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* Page Header */}
+      <DeleteConfirmationModal 
+        isOpen={showDeleteModal}
+        onCancel={() => { setShowDeleteModal(false); setMemberToDelete(null); }}
+        onConfirm={handleActualDelete}
+        memberName={memberToDelete?.name}
+        isLoading={isDeleting}
+      />
+
       <header className="mb-8">
         <h1 className="text-2xl font-extrabold tracking-tight text-slate-800">All Members</h1>
         <p className="text-slate-500 text-sm mt-1">Manage team access and invite new members.</p>
       </header>
 
-      {/* Add Members Section */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-semibold text-slate-800 text-base flex items-center gap-2">
@@ -149,7 +211,6 @@ export default function UsersPage() {
         )}
       </div>
 
-      {/* Members Table */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-12">
         <table className="w-full text-sm">
           <thead>
@@ -170,7 +231,7 @@ export default function UsersPage() {
             ) : members.length === 0 ? (
               <tr>
                 <td colSpan="4" className="text-center py-10 text-slate-400 text-sm">
-                  No members yet.
+                   No members yet.
                 </td>
               </tr>
             ) : (
@@ -184,7 +245,6 @@ export default function UsersPage() {
                   </td>
                   <td className="px-6 py-4 text-slate-500">{member.email}</td>
                   <td className="px-6 py-4">
-                    {/* Modern Sliding Toggle */}
                     <button
                       onClick={() => handleToggleStatus(member)}
                       disabled={member.email === currentUser?.email}
@@ -204,7 +264,7 @@ export default function UsersPage() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <button
-                      onClick={() => handleDelete(member)}
+                      onClick={() => confirmDelete(member)}
                       disabled={member.email === currentUser?.email}
                       className={`p-2 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-all ${
                         member.email === currentUser?.email ? 'opacity-0 pointer-events-none' : ''
