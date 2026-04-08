@@ -4,9 +4,11 @@ import TaskModal from "./components/TaskModal";
 import BacklogModal from "./components/BacklogModal";
 import TaskHistoryModal from "./components/TaskHistoryModal";
 import UsersPage from "./components/UsersPage";
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import TaskContext from "./context/TaskContext";
 import AuthContext from "./context/AuthContext";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import { DndContext, TouchSensor, MouseSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
@@ -16,6 +18,16 @@ function App() {
   const { tasks, addTask, deleteTask, openModal, selectedTask, updateTask, updateTaskStatus, closeModal, loading, error } = useContext(TaskContext);
   const { logout } = useContext(AuthContext);
   
+  // Listen for force-logout event fired by api.js on 403 response
+  useEffect(() => {
+    const handleForceLogout = (e) => {
+      toast.warn(e.detail?.message || "Your session has ended. Please log in again.");
+      logout();
+    };
+    window.addEventListener("force-logout", handleForceLogout);
+    return () => window.removeEventListener("force-logout", handleForceLogout);
+  }, [logout]);
+
   const [pendingBacklogTask, setPendingBacklogTask] = useState(null);
   const [historyTask, setHistoryTask] = useState(null);
   const [currentPage, setCurrentPage] = useState("boards"); // "boards" | "users"
@@ -185,6 +197,18 @@ function App() {
           closeModal={function() { setHistoryTask(null); }}
         />
       )}
+      <ToastContainer 
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </div>
     
   );

@@ -3,11 +3,30 @@ const BASE_URL = import.meta.env.VITE_API_URL || "https://kanban-backend-ljud.on
 
 function getHeaders() {
   const token = localStorage.getItem("token");
-  console.log("Sending Token:", token);
   return {
     "Content-Type": "application/json",
     ...(token ? { "Authorization": `Bearer ${token}` } : {})
   };
+}
+
+// Auto-logout: if backend returns 403, clear session and reload to login screen
+async function handleResponse(response, defaultErrorMsg) {
+  if (response.status === 403) {
+    const data = await response.json().catch(() => ({}));
+    // Force-logout the user back to the login screen
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    // Dispatch a custom event so AppContext can show a toast before reload
+    window.dispatchEvent(new CustomEvent("force-logout", {
+      detail: { message: data.message || "Your account has been deactivated. Please contact your administrator." }
+    }));
+    return null; // Signal that logout happened
+  }
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.message || defaultErrorMsg);
+  }
+  return response;
 }
 
 export async function loginUser(credentials) {
@@ -16,13 +35,11 @@ export async function loginUser(credentials) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(credentials)
   });
+  const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    if (response.status >= 400 && response.status < 500) {
-      throw new Error("Invalid email or password.");
-    }
-    throw new Error("Login failed. Please try again later.");
+    throw new Error(data.message || "Invalid email or password.");
   }
-  return response.json();
+  return data;
 }
 
 export async function registerUser(userData) {
@@ -31,17 +48,22 @@ export async function registerUser(userData) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(userData)
   });
-  if (!response.ok) throw new Error("Registration failed");
-  return response.json();
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.message || "Registration failed");
+  }
+  return data;
 }
+
 
 export async function fetchTasks() {
   const response = await fetch(`${BASE_URL}/tasks`, {
     method: "GET",
     headers: getHeaders(),
   });
-  if (!response.ok) throw new Error("Failed to fetch tasks");
-  return response.json();
+  const res = await handleResponse(response, "Failed to fetch tasks");
+  if (!res) return [];
+  return res.json();
 }
 
 export async function createTask(task) {
@@ -50,8 +72,9 @@ export async function createTask(task) {
     headers: getHeaders(),
     body: JSON.stringify(task),
   });
-  if (!response.ok) throw new Error("Failed to create task");
-  return response.json(); // returns task with MongoDB _id
+  const res = await handleResponse(response, "Failed to create task");
+  if (!res) return null;
+  return res.json();
 }
 
 export async function updateTaskStatus(id, newStatus) {
@@ -60,8 +83,9 @@ export async function updateTaskStatus(id, newStatus) {
     headers: getHeaders(),
     body: JSON.stringify({ status: newStatus }),
   });
-  if (!response.ok) throw new Error("Failed to update task status");
-  return response.json();
+  const res = await handleResponse(response, "Failed to update task status");
+  if (!res) return null;
+  return res.json();
 }
 
 export async function updateTask(id, task) {
@@ -70,8 +94,9 @@ export async function updateTask(id, task) {
     headers: getHeaders(),
     body: JSON.stringify(task),
   });
-  if (!response.ok) throw new Error("Failed to update task");
-  return response.json();
+  const res = await handleResponse(response, "Failed to update task");
+  if (!res) return null;
+  return res.json();
 }
 
 export async function deleteTask(id) {
@@ -79,7 +104,7 @@ export async function deleteTask(id) {
     method: "DELETE",
     headers: getHeaders(),
   });
-  if (!response.ok) throw new Error("Failed to delete task");
+  await handleResponse(response, "Failed to delete task");
 }
 
 // --- Invitation APIs ---
@@ -103,6 +128,25 @@ export async function fetchMembers() {
   if (!response.ok) throw new Error("Failed to fetch members");
   return response.json();
 }
+
+export async function toggleUserStatus(userId) {
+  const response = await fetch(`${BASE_URL}/users/${userId}/status`, {
+    method: "PATCH",
+    headers: getHeaders(),
+  });
+  if (!response.ok) throw new Error("Failed to update user status");
+  return response.json();
+}
+
+export async function deleteUser(userId) {
+  const response = await fetch(`${BASE_URL}/users/${userId}`, {
+    method: "DELETE",
+    headers: getHeaders(),
+  });
+  if (!response.ok) throw new Error("Failed to delete user");
+  return true;
+}
+
 
 
 export async function validateInviteToken(token) {

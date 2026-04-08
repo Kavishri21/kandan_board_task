@@ -6,6 +6,8 @@ import { TaskProvider } from "./context/TaskContext"
 import { AuthProvider } from "./context/AuthContext"
 import AuthContext from "./context/AuthContext"
 import AuthScreen from "./components/AuthScreen"
+import { ToastContainer } from "react-toastify"
+import "react-toastify/dist/ReactToastify.css"
 
 function AppWrapper() {
   const { token, loading } = useContext(AuthContext);
@@ -26,5 +28,16 @@ function AppWrapper() {
 createRoot(document.getElementById('root')).render(
   <AuthProvider>
     <AppWrapper />
+    {/* ToastContainer at root level — always visible on both login & dashboard */}
+    <ToastContainer
+      position="top-right"
+      autoClose={4000}
+      hideProgressBar={false}
+      newestOnTop
+      closeOnClick
+      draggable
+      pauseOnHover
+      theme="light"
+    />
   </AuthProvider>
 )

@@ -1,6 +1,7 @@
 import { useState, useContext, useEffect } from "react";
 import AuthContext from "../context/AuthContext";
 import { validateInviteToken, acceptInvitation } from "../services/api";
+import { toast } from "react-toastify";
 
 export default function AuthScreen() {
   const { login, signup, setUserFromInvite } = useContext(AuthContext);
@@ -51,7 +52,7 @@ export default function AuthScreen() {
         await signup(name, email, password);
       }
     } catch (err) {
-      setError(err.message);
+      toast.error(err.message);
     } finally {
       setIsLoading(false);
     }
@@ -167,12 +168,6 @@ export default function AuthScreen() {
             {isLogin ? "Sign in to manage your kanban board." : "Sign up to track tasks effortlessly."}
           </p>
         </div>
-
-        {error && (
-          <div className="mb-5 p-3 rounded-lg bg-red-50 text-red-600 text-sm border border-red-100 font-medium">
-            {error}
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-5 text-left">
           {!isLogin && (
