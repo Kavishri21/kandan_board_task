@@ -40,6 +40,15 @@ export default function AuthScreen() {
     }
   }, []);
 
+  // Check for logout reason (deactivation) on mount
+  useEffect(() => {
+    const reason = localStorage.getItem("logout_reason");
+    if (reason) {
+      toast.error(reason, { autoClose: 6000 });
+      localStorage.removeItem("logout_reason");
+    }
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");

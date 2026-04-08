@@ -13,14 +13,14 @@ function getHeaders() {
 async function handleResponse(response, defaultErrorMsg) {
   if (response.status === 403) {
     const data = await response.json().catch(() => ({}));
-    // Force-logout the user back to the login screen
+    // Store the reason so AuthScreen can show it after redirect
+    localStorage.setItem("logout_reason", data.message || "Your account has been deactivated. Please contact your administrator.");
+    // Clear session immediately
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    // Dispatch a custom event so AppContext can show a toast before reload
-    window.dispatchEvent(new CustomEvent("force-logout", {
-      detail: { message: data.message || "Your account has been deactivated. Please contact your administrator." }
-    }));
-    return null; // Signal that logout happened
+    // Reload to hit the !token check in main.jsx instantly
+    window.location.reload();
+    return null;
   }
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
@@ -35,7 +35,15 @@ export async function loginUser(credentials) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(credentials)
   });
-  const data = await response.json().catch(() => ({}));
+  
+  let data = {};
+  try {
+    const text = await response.text();
+    data = text ? JSON.parse(text) : {};
+  } catch (e) {
+    console.error("Failed to parse error response", e);
+  }
+
   if (!response.ok) {
     throw new Error(data.message || "Invalid email or password.");
   }
@@ -48,12 +56,21 @@ export async function registerUser(userData) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(userData)
   });
-  const data = await response.json().catch(() => ({}));
+
+  let data = {};
+  try {
+    const text = await response.text();
+    data = text ? JSON.parse(text) : {};
+  } catch (e) {
+    console.error("Failed to parse error response", e);
+  }
+
   if (!response.ok) {
     throw new Error(data.message || "Registration failed");
   }
   return data;
 }
+
 
 
 export async function fetchTasks() {

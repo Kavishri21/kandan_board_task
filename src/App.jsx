@@ -18,16 +18,6 @@ function App() {
   const { tasks, addTask, deleteTask, openModal, selectedTask, updateTask, updateTaskStatus, closeModal, loading, error } = useContext(TaskContext);
   const { logout } = useContext(AuthContext);
   
-  // Listen for force-logout event fired by api.js on 403 response
-  useEffect(() => {
-    const handleForceLogout = (e) => {
-      toast.warn(e.detail?.message || "Your session has ended. Please log in again.");
-      logout();
-    };
-    window.addEventListener("force-logout", handleForceLogout);
-    return () => window.removeEventListener("force-logout", handleForceLogout);
-  }, [logout]);
-
   const [pendingBacklogTask, setPendingBacklogTask] = useState(null);
   const [historyTask, setHistoryTask] = useState(null);
   const [currentPage, setCurrentPage] = useState("boards"); // "boards" | "users"
