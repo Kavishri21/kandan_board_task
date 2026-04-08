@@ -1,12 +1,44 @@
-import { useState } from "react";
+import { useState, useEffect, useContext } from "react";
 import { createPortal } from "react-dom";
+import { fetchMembers } from "../services/api";
+import AuthContext from "../context/AuthContext";
 
 function AddTaskForm(props) {
+  const { user: currentUser } = useContext(AuthContext);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("high");
+  const [assignedToId, setAssignedToId] = useState("");
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [error, setError] = useState("");
+  const [members, setMembers] = useState([]);
+  const [isLoadingMembers, setIsLoadingMembers] = useState(false);
+
+  // Set default assignee to self once currentUser is available
+  useEffect(() => {
+    if (currentUser && !assignedToId) {
+      setAssignedToId(currentUser.id);
+    }
+  }, [currentUser, assignedToId]);
+
+  // Load members when form is opened
+  useEffect(() => {
+    if (isFormVisible) {
+      loadMembers();
+    }
+  }, [isFormVisible]);
+
+  async function loadMembers() {
+    setIsLoadingMembers(true);
+    try {
+      const data = await fetchMembers();
+      setMembers(data);
+    } catch (err) {
+      console.error("Failed to load members", err);
+    } finally {
+      setIsLoadingMembers(false);
+    }
+  }
 
   function handleAdd(e) {
     if (e) e.preventDefault();
@@ -14,13 +46,17 @@ function AddTaskForm(props) {
       setError("Please enter a title for the task");
       return;
     }
+    if (!assignedToId) {
+      setError("Please select who to assign this task to");
+      return;
+    }
 
     const newTask = {
-      id: Date.now(),
       title: title,
       description: description,
       status: "todo",
-      priority: priority
+      priority: priority,
+      userId: assignedToId // This is the assignee ID the backend expects
     };
 
     props.addTask(newTask);
@@ -28,6 +64,7 @@ function AddTaskForm(props) {
     setTitle("");
     setDescription("");
     setPriority("high");
+    setAssignedToId(currentUser?.id || "");
     setError("");
     setIsFormVisible(false);
   }
@@ -100,7 +137,7 @@ function AddTaskForm(props) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Priority</label>
             <select
@@ -113,6 +150,31 @@ function AddTaskForm(props) {
               <option value="high">High</option>
               <option value="medium">Medium</option>
               <option value="low">Low</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Assigned To</label>
+            <select
+              className="w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:border-blue-500 outline-none transition-all text-slate-700 bg-white cursor-pointer"
+              value={assignedToId}
+              onChange={function(e) {
+                setAssignedToId(e.target.value);
+                if (error) setError("");
+              }}
+            >
+              {isLoadingMembers ? (
+                <option>Loading users...</option>
+              ) : (
+                <>
+                  <option value={currentUser?.id}>Myself ({currentUser?.name})</option>
+                  {members.filter(m => m.id !== currentUser?.id).map(member => (
+                    <option key={member.id} value={member.id}>
+                      {member.name}
+                    </option>
+                  ))}
+                </>
+              )}
             </select>
           </div>
         </div>

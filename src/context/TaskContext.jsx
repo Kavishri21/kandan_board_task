@@ -1,4 +1,5 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useState, useEffect, useContext } from "react";
+import AuthContext from "./AuthContext";
 import {
   fetchTasks,
   createTask as apiCreateTask,
@@ -10,10 +11,12 @@ import {
 const TaskContext = createContext();
 
 function TaskProvider(props) {
+  const { user: currentUser } = useContext(AuthContext);
   const [tasks, setTasks] = useState([]);
   const [selectedTask, setSelectedTask] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
 
   // ----------------------------------------------------------------
   // Load all tasks from MongoDB on initial mount
@@ -39,9 +42,12 @@ function TaskProvider(props) {
     apiCreateTask(task)
       .then(function (savedTask) {
         // savedTask has the MongoDB-generated id (_id mapped to id)
-        setTasks(function (prev) {
-          return [...prev, savedTask];
-        });
+        // Only add to local state if the task is assigned to ME
+        if (savedTask.userId === currentUser?.id) {
+          setTasks(function (prev) {
+            return [...prev, savedTask];
+          });
+        }
       })
       .catch(function (err) {
         console.error("Failed to create task:", err);
@@ -72,6 +78,14 @@ function TaskProvider(props) {
   function updateTask(updatedTask) {
     return apiUpdateTask(updatedTask.id, updatedTask)
       .then(function (savedTask) {
+        // If task was reassigned to someone else, remove it from local state
+        if (savedTask.userId !== currentUser?.id) {
+          setTasks(function (prev) {
+            return prev.filter(function (t) { return t.id !== savedTask.id; });
+          });
+          return savedTask;
+        }
+
         setTasks(function (prev) {
           return prev.map(function (task) {
             if (task.id === savedTask.id) {
