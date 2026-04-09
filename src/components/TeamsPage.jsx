@@ -45,9 +45,6 @@ function UserSelectionList({ users, selectedUserIds, onToggleUser, searchQuery, 
                 onChange={() => onToggleUser(user.id)}
               />
               <div className="flex items-center gap-2">
-                 <div className="w-7 h-7 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold text-xs uppercase">
-                   {user.name.charAt(0)}
-                 </div>
                  <div className="flex flex-col">
                    <span className="text-sm font-semibold text-slate-700 group-hover:text-blue-700">{user.name}</span>
                    <span className="text-[10px] text-slate-400 leading-tight">{user.email}</span>
@@ -577,9 +574,6 @@ export default function TeamsPage() {
                     return user ? (
                       <div key={user.id} className="flex items-center justify-between group">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 bg-blue-50 text-blue-700 rounded-full flex items-center justify-center font-bold border border-blue-100 shadow-sm">
-                            {user.name.charAt(0).toUpperCase()}
-                          </div>
                           <div className="flex flex-col">
                             <span className="text-sm font-bold text-slate-700">{user.name}</span>
                             <span className="text-xs text-slate-400 leading-none">{user.email}</span>
