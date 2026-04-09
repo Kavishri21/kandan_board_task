@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from "react";
 import { createPortal } from "react-dom";
-import { fetchMembers } from "../services/api";
+import { fetchMembers, fetchTeams } from "../services/api";
 import AuthContext from "../context/AuthContext";
 
 function AddTaskForm(props) {
@@ -31,8 +31,20 @@ function AddTaskForm(props) {
   async function loadMembers() {
     setIsLoadingMembers(true);
     try {
-      const data = await fetchMembers();
-      setMembers(data);
+      // Fetch both all users and all teams in parallel to filter by current user's team
+      const [allMembers, allTeams] = await Promise.all([fetchMembers(), fetchTeams()]);
+
+      // Find the team that the current user belongs to
+      const myTeam = allTeams.find(team => team.memberIds.includes(currentUser?.id));
+
+      if (myTeam) {
+        // Filter allMembers to only include members who are in myTeam
+        const teamMembers = allMembers.filter(m => myTeam.memberIds.includes(m.id));
+        setMembers(teamMembers);
+      } else {
+        // User is not in any team — only show themselves (dropdown logic handles this)
+        setMembers([]);
+      }
     } catch (err) {
       console.error("Failed to load members", err);
     } finally {
