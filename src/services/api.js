@@ -184,3 +184,34 @@ export async function acceptInvitation(token, password) {
   return data;
 }
 
+// --- Team APIs ---
+
+export async function fetchTeams() {
+  const response = await fetch(`${BASE_URL}/teams`, {
+    method: "GET",
+    headers: getHeaders(),
+  });
+  const res = await handleResponse(response, "Failed to fetch teams");
+  if (!res) return [];
+  return res.json();
+}
+
+export async function createTeam(name, memberIds) {
+  const response = await fetch(`${BASE_URL}/teams`, {
+    method: "POST",
+    headers: getHeaders(),
+    body: JSON.stringify({ name, memberIds }),
+  });
+  const res = await handleResponse(response, "Failed to create team");
+  if (!res) return null;
+  return res.json();
+}
+
+export async function moveMemberToTeam(userId, toTeamId) {
+  const response = await fetch(`${BASE_URL}/teams/members/${userId}/move?toTeamId=${toTeamId}`, {
+    method: "PATCH",
+    headers: getHeaders(),
+  });
+  await handleResponse(response, "Failed to move member");
+}
+
