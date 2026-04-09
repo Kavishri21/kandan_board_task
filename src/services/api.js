@@ -207,6 +207,15 @@ export async function createTeam(name, memberIds) {
   return res.json();
 }
 
+export async function addMembersToTeam(teamId, memberIds) {
+  const response = await fetch(`${BASE_URL}/teams/${teamId}/members`, {
+    method: "PATCH",
+    headers: getHeaders(),
+    body: JSON.stringify({ memberIds }),
+  });
+  await handleResponse(response, "Failed to add members");
+}
+
 export async function moveMemberToTeam(userId, toTeamId) {
   const response = await fetch(`${BASE_URL}/teams/members/${userId}/move?toTeamId=${toTeamId}`, {
     method: "PATCH",

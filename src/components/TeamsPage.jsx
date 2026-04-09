@@ -4,17 +4,69 @@ import {
   fetchTeams, 
   fetchMembers, 
   createTeam, 
-  moveMemberToTeam 
+  moveMemberToTeam,
+  addMembersToTeam
 } from "../services/api";
 import AuthContext from "../context/AuthContext";
 import { toast } from "react-toastify";
 
+// --- Sub-component: User Selection List (Shared UI) ---
+function UserSelectionList({ users, selectedUserIds, onToggleUser, searchQuery, onSearchChange }) {
+  const filteredUsers = users.filter(user => 
+    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div className="flex-1 flex flex-col min-h-0">
+      <div className="relative mb-3">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        </span>
+        <input 
+          type="text"
+          placeholder="Search users..."
+          className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-4 py-2 text-sm focus:bg-white focus:border-blue-500 outline-none transition-all"
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+        />
+      </div>
+
+      <div className="flex-1 overflow-y-auto border border-slate-100 rounded-lg bg-slate-50/50 p-1 mb-6 space-y-1 custom-scrollbar">
+        {filteredUsers.length === 0 ? (
+          <div className="p-8 text-center text-slate-400 text-sm">No users found.</div>
+        ) : (
+          filteredUsers.map(user => (
+            <label key={user.id} className="flex items-center gap-3 p-2.5 hover:bg-white rounded-md cursor-pointer transition-colors group">
+              <input 
+                type="checkbox"
+                className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300"
+                checked={selectedUserIds.has(user.id)}
+                onChange={() => onToggleUser(user.id)}
+              />
+              <div className="flex items-center gap-2">
+                 <div className="w-7 h-7 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold text-xs uppercase">
+                   {user.name.charAt(0)}
+                 </div>
+                 <div className="flex flex-col">
+                   <span className="text-sm font-semibold text-slate-700 group-hover:text-blue-700">{user.name}</span>
+                   <span className="text-[10px] text-slate-400 leading-tight">{user.email}</span>
+                 </div>
+              </div>
+            </label>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
 // --- Sub-component: Conflict Confirmation Modal ---
-function ConflictConfirmationModal({ isOpen, onCancel, onConfirm, conflicts }) {
+function ConflictConfirmationModal({ isOpen, onCancel, onConfirm, conflicts, targetTeamName }) {
   if (!isOpen || conflicts.length === 0) return null;
 
   return createPortal(
-    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex justify-center items-center z-[120] p-4 text-left animate-in fade-in duration-200">
+    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex justify-center items-center z-[130] p-4 text-left animate-in fade-in duration-200">
       <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md transform transition-all border border-slate-200 animate-in zoom-in-95 duration-200">
         <div className="flex items-center gap-3 mb-4 text-amber-500">
           <div className="w-10 h-10 bg-amber-50 rounded-full flex items-center justify-center">
@@ -24,7 +76,7 @@ function ConflictConfirmationModal({ isOpen, onCancel, onConfirm, conflicts }) {
         </div>
         
         <p className="text-slate-600 text-sm mb-4 leading-relaxed">
-          Some selected members are already in other teams. Moving them will remove them from their current teams:
+          The following members are already in other teams. Moving them will remove them from their current assignments:
         </p>
 
         <div className="space-y-2 mb-6 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
@@ -34,7 +86,7 @@ function ConflictConfirmationModal({ isOpen, onCancel, onConfirm, conflicts }) {
               <div className="flex items-center gap-2 text-slate-400">
                 <span>{c.prevTeamName}</span>
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                <span className="text-blue-600 font-semibold">New Team</span>
+                <span className="text-blue-600 font-semibold">{targetTeamName || 'New Team'}</span>
               </div>
             </div>
           ))}
@@ -73,18 +125,10 @@ function CreateTeamModal({ isOpen, onClose, allUsers, allTeams, onTeamCreated })
 
   if (!isOpen) return null;
 
-  const filteredUsers = allUsers.filter(user => 
-    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   const toggleUser = (userId) => {
     const newSet = new Set(selectedUserIds);
-    if (newSet.has(userId)) {
-      newSet.delete(userId);
-    } else {
-      newSet.add(userId);
-    }
+    if (newSet.has(userId)) newSet.delete(userId);
+    else newSet.add(userId);
     setSelectedUserIds(newSet);
   };
 
@@ -95,7 +139,6 @@ function CreateTeamModal({ isOpen, onClose, allUsers, allTeams, onTeamCreated })
       return;
     }
 
-    // 1. Check for conflicts
     const conflicts = [];
     selectedUserIds.forEach(uid => {
       const existingTeam = allTeams.find(t => t.memberIds.includes(uid));
@@ -122,7 +165,6 @@ function CreateTeamModal({ isOpen, onClose, allUsers, allTeams, onTeamCreated })
       toast.success(`Team "${teamName}" created!`);
       onTeamCreated(newTeam);
       onClose();
-      // Reset form
       setTeamName("");
       setSelectedUserIds(new Set());
       setSearchQuery("");
@@ -142,6 +184,7 @@ function CreateTeamModal({ isOpen, onClose, allUsers, allTeams, onTeamCreated })
         onCancel={() => setShowConflictModal(false)}
         onConfirm={performCreate}
         conflicts={pendingConflicts}
+        targetTeamName={teamName}
       />
       {createPortal(
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex justify-center items-center z-[110] p-4 text-left animate-in fade-in duration-200">
@@ -167,48 +210,13 @@ function CreateTeamModal({ isOpen, onClose, allUsers, allTeams, onTeamCreated })
                 {error && <p className="text-red-500 text-xs mt-1 font-medium">{error}</p>}
               </div>
 
-              <div className="flex-1 flex flex-col min-h-0">
-                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Select Members</label>
-                
-                <div className="relative mb-3">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                  </span>
-                  <input 
-                    type="text"
-                    placeholder="Search users..."
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-9 pr-4 py-2 text-sm focus:bg-white focus:border-blue-500 outline-none transition-all"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-
-                <div className="flex-1 overflow-y-auto border border-slate-100 rounded-lg bg-slate-50/50 p-1 mb-6 space-y-1 custom-scrollbar">
-                  {filteredUsers.length === 0 ? (
-                    <div className="p-8 text-center text-slate-400 text-sm">No users found.</div>
-                  ) : (
-                    filteredUsers.map(user => (
-                      <label key={user.id} className="flex items-center gap-3 p-2.5 hover:bg-white rounded-md cursor-pointer transition-colors group">
-                        <input 
-                          type="checkbox"
-                          className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300"
-                          checked={selectedUserIds.has(user.id)}
-                          onChange={() => toggleUser(user.id)}
-                        />
-                        <div className="flex items-center gap-2">
-                           <div className="w-7 h-7 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold text-xs uppercase">
-                             {user.name.charAt(0)}
-                           </div>
-                           <div className="flex flex-col">
-                             <span className="text-sm font-semibold text-slate-700 group-hover:text-blue-700">{user.name}</span>
-                             <span className="text-[10px] text-slate-400 leading-tight">{user.email}</span>
-                           </div>
-                        </div>
-                      </label>
-                    ))
-                  )}
-                </div>
-              </div>
+              <UserSelectionList 
+                users={allUsers}
+                selectedUserIds={selectedUserIds}
+                onToggleUser={toggleUser}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+              />
 
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
                 <button
@@ -227,6 +235,122 @@ function CreateTeamModal({ isOpen, onClose, allUsers, allTeams, onTeamCreated })
                 </button>
               </div>
             </form>
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
+  );
+}
+
+// --- Sub-component: Add Members Modal ---
+function AddMembersModal({ isOpen, onClose, team, allUsers, allTeams, onMembersAdded }) {
+  const [selectedUserIds, setSelectedUserIds] = useState(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showConflictModal, setShowConflictModal] = useState(false);
+  const [pendingConflicts, setPendingConflicts] = useState([]);
+
+  if (!isOpen || !team) return null;
+
+  // Filter out users who are ALREADY in this team
+  const availableUsers = allUsers.filter(u => !team.memberIds.includes(u.id));
+
+  const toggleUser = (userId) => {
+    const newSet = new Set(selectedUserIds);
+    if (newSet.has(userId)) newSet.delete(userId);
+    else newSet.add(userId);
+    setSelectedUserIds(newSet);
+  };
+
+  async function checkConflictsAndSubmit(e) {
+    if (e) e.preventDefault();
+    if (selectedUserIds.size === 0) {
+      toast.warn("Please select at least one member.");
+      return;
+    }
+
+    const conflicts = [];
+    selectedUserIds.forEach(uid => {
+      const existingTeam = allTeams.find(t => t.memberIds.includes(uid));
+      if (existingTeam) {
+        const user = allUsers.find(u => u.id === uid);
+        conflicts.push({ userId: uid, userName: user?.name, prevTeamName: existingTeam.name });
+      }
+    });
+
+    if (conflicts.length > 0) {
+      setPendingConflicts(conflicts);
+      setShowConflictModal(true);
+      return;
+    }
+
+    await performAdd();
+  }
+
+  async function performAdd() {
+    setIsSubmitting(true);
+    try {
+      await addMembersToTeam(team.id, Array.from(selectedUserIds));
+      toast.success("Members added successfully!");
+      onMembersAdded();
+      onClose();
+      setSelectedUserIds(new Set());
+      setSearchQuery("");
+      setShowConflictModal(false);
+    } catch (err) {
+      toast.error("Failed to add members.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  return (
+    <>
+      <ConflictConfirmationModal 
+        isOpen={showConflictModal}
+        onCancel={() => setShowConflictModal(false)}
+        onConfirm={performAdd}
+        conflicts={pendingConflicts}
+        targetTeamName={team.name}
+      />
+      {createPortal(
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex justify-center items-center z-[110] p-4 text-left animate-in fade-in duration-200">
+          <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-md transform transition-all border border-slate-200 flex flex-col max-h-[85vh]">
+            <div className="flex justify-between items-center mb-5">
+              <div>
+                <h2 className="text-xl font-bold text-slate-800">Add to Team</h2>
+                <p className="text-slate-400 text-xs font-medium">Adding members to <span className="text-blue-600 italic">{team.name}</span></p>
+              </div>
+              <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+
+            <UserSelectionList 
+              users={availableUsers}
+              selectedUserIds={selectedUserIds}
+              onToggleUser={toggleUser}
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+            />
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={checkConflictsAndSubmit}
+                disabled={isSubmitting || selectedUserIds.size === 0}
+                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold shadow-md transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
+              >
+                {isSubmitting ? "Adding..." : "Add Members"}
+              </button>
+            </div>
           </div>
         </div>,
         document.body
@@ -259,9 +383,10 @@ function ChangeMemberTeamModal({ isOpen, onClose, member, allTeams, onMoved }) {
 
   async function performMove(teamId = selectedTeamId) {
     setIsMoving(true);
+    const targetTeam = allTeams.find(t => t.id === teamId);
     try {
       await moveMemberToTeam(member.id, teamId);
-      toast.success(`${member.name} moved to new team.`);
+      toast.success(`${member.name} moved to ${targetTeam?.name || 'new team'}.`);
       onMoved(); 
       onClose();
       setShowConflictModal(false);
@@ -279,6 +404,7 @@ function ChangeMemberTeamModal({ isOpen, onClose, member, allTeams, onMoved }) {
         onCancel={() => setShowConflictModal(false)}
         onConfirm={() => performMove()}
         conflicts={conflictData}
+        targetTeamName={allTeams.find(t => t.id === selectedTeamId)?.name}
       />
       {createPortal(
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex justify-center items-center z-[110] p-4 text-left animate-in fade-in duration-200">
@@ -337,6 +463,7 @@ export default function TeamsPage() {
   // Modals state
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [memberToChange, setMemberToChange] = useState(null);
+  const [teamToAddMembers, setTeamToAddMembers] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -365,6 +492,15 @@ export default function TeamsPage() {
         allUsers={allUsers}
         allTeams={teams}
         onTeamCreated={() => loadData()}
+      />
+
+      <AddMembersModal 
+        isOpen={!!teamToAddMembers}
+        onClose={() => setTeamToAddMembers(null)}
+        team={teamToAddMembers}
+        allUsers={allUsers}
+        allTeams={teams}
+        onMembersAdded={() => loadData()}
       />
 
       <ChangeMemberTeamModal 
@@ -418,9 +554,18 @@ export default function TeamsPage() {
                    </div>
                    <h3 className="font-extrabold text-slate-800 text-lg">{team.name}</h3>
                  </div>
-                 <span className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-bold text-slate-500 uppercase tracking-wider shadow-sm">
-                   {team.memberIds.length} members
-                 </span>
+                 <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-[10px] font-bold text-slate-500 uppercase tracking-wider shadow-sm">
+                      {team.memberIds.length} members
+                    </span>
+                    <button 
+                      onClick={() => setTeamToAddMembers(team)}
+                      className="p-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm transition-all active:scale-95"
+                      title="Add members"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    </button>
+                 </div>
               </div>
               
               <div className="flex-1 p-6 space-y-4">
