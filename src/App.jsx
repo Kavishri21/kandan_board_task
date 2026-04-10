@@ -5,6 +5,7 @@ import BacklogModal from "./components/BacklogModal";
 import TaskHistoryModal from "./components/TaskHistoryModal";
 import UsersPage from "./components/UsersPage";
 import TeamsPage from "./components/TeamsPage";
+import TeamDetailPage from "./components/TeamDetailPage";
 import { useContext, useState, useEffect } from "react";
 import TaskContext from "./context/TaskContext";
 import AuthContext from "./context/AuthContext";
@@ -21,7 +22,13 @@ function App() {
   
   const [pendingBacklogTask, setPendingBacklogTask] = useState(null);
   const [historyTask, setHistoryTask] = useState(null);
-  const [currentPage, setCurrentPage] = useState("boards"); // "boards" | "users"
+  const [currentPage, setCurrentPage] = useState("board");
+  const [viewingTeam, setViewingTeam] = useState(null);
+  
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    setViewingTeam(null);
+  };
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -86,16 +93,16 @@ function App() {
 
         <div className="flex-1 flex flex-col gap-2">
           <button
-            onClick={() => setCurrentPage("boards")}
+            onClick={() => handlePageChange("board")}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium w-full text-left transition-colors ${
-              currentPage === "boards" ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-100"
+              currentPage === "board" ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-100"
             }`}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
             Boards
           </button>
           <button
-            onClick={() => setCurrentPage("users")}
+            onClick={() => handlePageChange("users")}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium w-full text-left transition-colors ${
               currentPage === "users" ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-100"
             }`}
@@ -104,7 +111,7 @@ function App() {
             Users
           </button>
           <button
-            onClick={() => setCurrentPage("teams")}
+            onClick={() => handlePageChange("teams")}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium w-full text-left transition-colors ${
               currentPage === "teams" ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-100"
             }`}
@@ -135,7 +142,7 @@ function App() {
           <button onClick={logout} className="text-sm font-bold text-slate-500 p-2">Logout</button>
         </div>
 
-        {currentPage === "boards" && (
+        {currentPage === "board" && (
           <>
             <header className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
@@ -168,7 +175,15 @@ function App() {
         )}
 
         {currentPage === "users" && <UsersPage />}
-        {currentPage === "teams" && <TeamsPage />}
+        {currentPage === "teams" && !viewingTeam && (
+          <TeamsPage onViewTeam={(team) => setViewingTeam(team)} />
+        )}
+        {currentPage === "teams" && viewingTeam && (
+          <TeamDetailPage 
+            team={viewingTeam} 
+            onBack={() => setViewingTeam(null)} 
+          />
+        )}
       </main>
 
       {selectedTask && (

@@ -196,11 +196,11 @@ export async function fetchTeams() {
   return res.json();
 }
 
-export async function createTeam(name, memberIds) {
+export async function createTeam(name, createdByUserId, memberIds) {
   const response = await fetch(`${BASE_URL}/teams`, {
     method: "POST",
     headers: getHeaders(),
-    body: JSON.stringify({ name, memberIds }),
+    body: JSON.stringify({ name, createdByUserId, memberIds }),
   });
   const res = await handleResponse(response, "Failed to create team");
   if (!res) return null;
@@ -214,6 +214,33 @@ export async function addMembersToTeam(teamId, memberIds) {
     body: JSON.stringify({ memberIds }),
   });
   await handleResponse(response, "Failed to add members");
+}
+
+export async function renameTeam(teamId, newName) {
+  const response = await fetch(`${BASE_URL}/teams/${teamId}/name`, {
+    method: "PATCH",
+    headers: getHeaders(),
+    body: JSON.stringify({ name: newName }),
+  });
+  const res = await handleResponse(response, "Failed to rename team");
+  if (!res) return null;
+  return res.json();
+}
+
+export async function removeMemberFromTeam(teamId, userId) {
+  const response = await fetch(`${BASE_URL}/teams/${teamId}/members/${userId}`, {
+    method: "DELETE",
+    headers: getHeaders(),
+  });
+  await handleResponse(response, "Failed to remove member");
+}
+
+export async function deleteTeam(teamId) {
+  const response = await fetch(`${BASE_URL}/teams/${teamId}`, {
+    method: "DELETE",
+    headers: getHeaders(),
+  });
+  await handleResponse(response, "Failed to delete team");
 }
 
 export async function moveMemberToTeam(userId, toTeamId) {
