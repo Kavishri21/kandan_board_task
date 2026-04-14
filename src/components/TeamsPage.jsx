@@ -106,7 +106,11 @@ function CreateTeamModal({ isOpen, onClose, allUsers, onTeamCreated, currentUser
     setError("");
     try {
       const newTeam = await createTeam(teamName);
-      await Promise.all(Array.from(selectedUserIds).map(uid => addMemberToTeam(newTeam.id, uid, "CONTRIBUTOR")));
+      // Sequential (not parallel) to avoid race condition where all calls
+      // read the same team state and overwrite each other
+      for (const uid of Array.from(selectedUserIds)) {
+        await addMemberToTeam(newTeam.id, uid, "CONTRIBUTOR");
+      }
       toast.success(`Team "${teamName}" created with ${selectedUserIds.size + 1} member(s)!`);
       onTeamCreated();
       onClose();
@@ -194,7 +198,11 @@ function AddMembersModal({ isOpen, onClose, team, allUsers, onMembersAdded }) {
     if (selectedUserIds.size === 0) { toast.warn("Please select at least one member."); return; }
     setIsSubmitting(true);
     try {
-      await Promise.all(Array.from(selectedUserIds).map(uid => addMemberToTeam(team.id, uid, "CONTRIBUTOR")));
+      // Sequential (not parallel) to avoid race condition where all calls
+      // read the same team state and overwrite each other
+      for (const uid of Array.from(selectedUserIds)) {
+        await addMemberToTeam(team.id, uid, "CONTRIBUTOR");
+      }
       toast.success(`${selectedUserIds.size} member(s) added to "${team.name}"!`);
       onMembersAdded();
       onClose();
