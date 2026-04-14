@@ -259,7 +259,7 @@ function AddTaskForm(props) {
               <button
                 type="submit"
                 className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow-sm transition-colors disabled:opacity-50"
-                disabled={!selectedTeamId || !assignedToId}
+                disabled={!title.trim() || !assignedToId || (userTeams.length > 0 && !selectedTeamId)}
               >
                 Create Task
               </button>
