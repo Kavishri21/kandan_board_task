@@ -147,8 +147,9 @@ function App() {
             <header className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h1 className="text-2xl font-extrabold tracking-tight text-slate-800">
-                  Kanban Boards
+                  My Board
                 </h1>
+                <p className="text-sm text-slate-400 font-medium mt-0.5">Your personal task view across all teams.</p>
               </div>
               <div className="flex shrink-0">
                 <AddTaskForm addTask={addTask} />
