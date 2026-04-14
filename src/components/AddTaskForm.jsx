@@ -92,7 +92,8 @@ function AddTaskForm(props) {
       setError("Please enter a title for the task.");
       return;
     }
-    if (!selectedTeamId) {
+    // Only require team selection if the user actually has teams to choose from
+    if (userTeams.length > 0 && !selectedTeamId) {
       setError("Please select a team for this task.");
       return;
     }
@@ -107,7 +108,8 @@ function AddTaskForm(props) {
       status: "todo",
       priority,
       userId: assignedToId,
-      teamId: selectedTeamId,
+      // Only include teamId if one is selected
+      ...(selectedTeamId ? { teamId: selectedTeamId } : {}),
     };
 
     props.addTask(newTask);
