@@ -30,9 +30,10 @@ function AddTaskForm(props) {
       loadMembersForTeam(selectedTeamId);
     } else {
       setTeamMembers([]);
-      setAssignedToId("");
+      // Default to self when no team — so Assigned To always has a value
+      setAssignedToId(currentUser?.id || "");
     }
-  }, [selectedTeamId]);
+  }, [selectedTeamId, currentUser?.id]);
 
   async function loadTeams() {
     setIsLoadingTeams(true);
@@ -220,30 +221,31 @@ function AddTaskForm(props) {
                 </div>
               </div>
 
-              {/* Assigned To — only appears once a team is selected */}
-              {selectedTeamId && (
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Assigned To *</label>
-                  <select
-                    className="w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:border-blue-500 outline-none transition-all text-slate-700 bg-white cursor-pointer"
-                    value={assignedToId}
-                    onChange={e => { setAssignedToId(e.target.value); if (error) setError(""); }}
-                    disabled={isLoadingMembers}
-                  >
-                    {isLoadingMembers ? (
-                      <option>Loading members...</option>
-                    ) : teamMembers.length === 0 ? (
-                      <option value="">No members in this team</option>
-                    ) : (
-                      teamMembers.map(member => (
-                        <option key={member.id} value={member.id}>
-                          {member.name}{member.id === currentUser?.id ? " (Me)" : ""}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                </div>
-              )}
+              {/* Assigned To — always visible; filters by team when one is selected */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Assigned To *</label>
+                <select
+                  className="w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:border-blue-500 outline-none transition-all text-slate-700 bg-white cursor-pointer"
+                  value={assignedToId}
+                  onChange={e => { setAssignedToId(e.target.value); if (error) setError(""); }}
+                  disabled={isLoadingMembers}
+                >
+                  {isLoadingMembers ? (
+                    <option>Loading members...</option>
+                  ) : !selectedTeamId ? (
+                    // No team selected — show only Myself
+                    <option value={currentUser?.id}>Myself ({currentUser?.name})</option>
+                  ) : teamMembers.length === 0 ? (
+                    <option value={currentUser?.id}>Myself ({currentUser?.name})</option>
+                  ) : (
+                    teamMembers.map(member => (
+                      <option key={member.id} value={member.id}>
+                        {member.name}{member.id === currentUser?.id ? " (Me)" : ""}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
             </div>
 
             <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-100">
