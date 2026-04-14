@@ -17,9 +17,8 @@ function TaskProvider(props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-
   // ----------------------------------------------------------------
-  // Load all tasks from MongoDB on initial mount
+  // Load all user-scoped tasks from MongoDB on initial mount
   // ----------------------------------------------------------------
   useEffect(function () {
     setLoading(true);

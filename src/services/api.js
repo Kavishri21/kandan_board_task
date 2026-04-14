@@ -73,8 +73,9 @@ export async function registerUser(userData) {
 
 
 
-export async function fetchTasks() {
-  const response = await fetch(`${BASE_URL}/tasks`, {
+export async function fetchTasks(teamId) {
+  const url = teamId ? `${BASE_URL}/tasks?teamId=${teamId}` : `${BASE_URL}/tasks`;
+  const response = await fetch(url, {
     method: "GET",
     headers: getHeaders(),
   });
@@ -155,6 +156,19 @@ export async function toggleUserStatus(userId) {
   return response.json();
 }
 
+export async function updateUserRole(userId, globalRole) {
+  const response = await fetch(`${BASE_URL}/users/${userId}/role`, {
+    method: "PATCH",
+    headers: getHeaders(),
+    body: JSON.stringify({ globalRole })
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to update user role");
+  }
+  return response.json();
+}
+
 export async function deleteUser(userId) {
   const response = await fetch(`${BASE_URL}/users/${userId}`, {
     method: "DELETE",
@@ -196,31 +210,60 @@ export async function fetchTeams() {
   return res.json();
 }
 
-export async function createTeam(name, memberIds) {
+export async function createTeam(name) {
   const response = await fetch(`${BASE_URL}/teams`, {
     method: "POST",
     headers: getHeaders(),
-    body: JSON.stringify({ name, memberIds }),
+    body: JSON.stringify({ name }),
   });
   const res = await handleResponse(response, "Failed to create team");
   if (!res) return null;
   return res.json();
 }
 
-export async function addMembersToTeam(teamId, memberIds) {
+export async function addMemberToTeam(teamId, userId, teamRole) {
   const response = await fetch(`${BASE_URL}/teams/${teamId}/members`, {
-    method: "PATCH",
+    method: "POST",
     headers: getHeaders(),
-    body: JSON.stringify({ memberIds }),
+    body: JSON.stringify({ userId, teamRole }),
   });
-  await handleResponse(response, "Failed to add members");
+  await handleResponse(response, "Failed to add member");
 }
 
-export async function moveMemberToTeam(userId, toTeamId) {
-  const response = await fetch(`${BASE_URL}/teams/members/${userId}/move?toTeamId=${toTeamId}`, {
+export async function updateTeamMemberRole(teamId, userId, teamRole) {
+  const response = await fetch(`${BASE_URL}/teams/${teamId}/members/${userId}/role`, {
     method: "PATCH",
     headers: getHeaders(),
+    body: JSON.stringify({ teamRole }),
   });
-  await handleResponse(response, "Failed to move member");
+  await handleResponse(response, "Failed to update member role");
 }
 
+export async function renameTeam(teamId, newName) {
+  const response = await fetch(`${BASE_URL}/teams/${teamId}/name`, {
+    method: "PATCH",
+    headers: getHeaders(),
+    body: JSON.stringify({ name: newName }),
+  });
+  const res = await handleResponse(response, "Failed to rename team");
+  if (!res) return null;
+  return res.json();
+}
+
+export async function removeMemberFromTeam(teamId, userId) {
+  const response = await fetch(`${BASE_URL}/teams/${teamId}/members/${userId}`, {
+    method: "DELETE",
+    headers: getHeaders(),
+  });
+  await handleResponse(response, "Failed to remove member");
+}
+
+export async function deleteTeam(teamId) {
+  const response = await fetch(`${BASE_URL}/teams/${teamId}`, {
+    method: "DELETE",
+    headers: getHeaders(),
+  });
+  await handleResponse(response, "Failed to delete team");
+}
+
+// DEPRECATED API - removed moveMemberToTeam since member architecture supports multi-teams

@@ -1,6 +1,6 @@
 import { useState, useEffect, useContext } from "react";
 import { createPortal } from "react-dom";
-import { sendInvitation, fetchMembers, toggleUserStatus, deleteUser } from "../services/api";
+import { sendInvitation, fetchMembers, toggleUserStatus, deleteUser, updateUserRole } from "../services/api";
 import AuthContext from "../context/AuthContext";
 import { toast } from "react-toastify";
 
@@ -116,6 +116,21 @@ export default function UsersPage() {
     }
   }
 
+  async function handleRoleChange(member, newRole) {
+    if (member.email === currentUser?.email && currentUser?.globalRole === 'ORG_ADMIN' && newRole !== 'ORG_ADMIN') {
+       toast.error("You cannot demote yourself. Promote another user first.");
+       return;
+    }
+    
+    try {
+      const updated = await updateUserRole(member.id, newRole);
+      setMembers(prev => prev.map(m => m.id === member.id ? updated : m));
+      toast.success(`${member.name}'s role updated to ${newRole}`);
+    } catch (err) {
+      toast.error(err.message || "Failed to update role.");
+    }
+  }
+
   function confirmDelete(member) {
     if (member.email === currentUser?.email) {
       toast.error("You cannot delete your own account.");
@@ -217,6 +232,7 @@ export default function UsersPage() {
             <tr className="bg-slate-50 border-b border-slate-200">
               <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Name</th>
               <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</th>
+              <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Role</th>
               <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
               <th className="text-right px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
             </tr>
@@ -245,12 +261,29 @@ export default function UsersPage() {
                   </td>
                   <td className="px-6 py-4 text-slate-500">{member.email}</td>
                   <td className="px-6 py-4">
+                    {currentUser?.globalRole === 'ORG_ADMIN' ? (
+                      <select 
+                        value={member.globalRole || "EMPLOYEE"} 
+                        onChange={(e) => handleRoleChange(member, e.target.value)}
+                        className="border border-slate-200 rounded px-2 py-1 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
+                      >
+                        <option value="EMPLOYEE">Employee</option>
+                        <option value="MANAGER">Manager</option>
+                        <option value="ORG_ADMIN">Org Admin</option>
+                      </select>
+                    ) : (
+                      <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200 uppercase tracking-wider">
+                        {(member.globalRole || "EMPLOYEE").replace('_', ' ')}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4">
                     <button
                       onClick={() => handleToggleStatus(member)}
-                      disabled={member.email === currentUser?.email}
+                      disabled={member.email === currentUser?.email || currentUser?.globalRole !== 'ORG_ADMIN'}
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                         member.active ? 'bg-blue-600' : 'bg-slate-300'
-                      } ${member.email === currentUser?.email ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                      } ${member.email === currentUser?.email || currentUser?.globalRole !== 'ORG_ADMIN' ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                     >
                       <span
                         className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
@@ -265,9 +298,9 @@ export default function UsersPage() {
                   <td className="px-6 py-4 text-right">
                     <button
                       onClick={() => confirmDelete(member)}
-                      disabled={member.email === currentUser?.email}
+                      disabled={member.email === currentUser?.email || currentUser?.globalRole !== 'ORG_ADMIN'}
                       className={`p-2 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-all ${
-                        member.email === currentUser?.email ? 'opacity-0 pointer-events-none' : ''
+                        member.email === currentUser?.email || currentUser?.globalRole !== 'ORG_ADMIN' ? 'opacity-0 pointer-events-none' : ''
                       }`}
                       title="Delete user"
                     >
