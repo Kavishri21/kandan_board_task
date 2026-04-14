@@ -483,6 +483,7 @@ export default function TeamsPage({ onViewTeam }) {
   }
 
   const isOrgAdmin = currentUser?.globalRole === "ORG_ADMIN";
+  const canManageTeams = isOrgAdmin || currentUser?.globalRole === "MANAGER";
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -520,7 +521,7 @@ export default function TeamsPage({ onViewTeam }) {
           <h1 className="text-3xl font-extrabold tracking-tight text-slate-800">Teams</h1>
           <p className="text-slate-500 text-sm mt-1 font-medium">Group users and manage team assignments.</p>
         </div>
-        {isOrgAdmin && (
+        {canManageTeams && (
           <button
             onClick={() => setShowCreateModal(true)}
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-md transition-all active:scale-95"
@@ -542,7 +543,7 @@ export default function TeamsPage({ onViewTeam }) {
             <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           </div>
           <h3 className="text-xl font-bold text-slate-800 mb-1">No teams yet</h3>
-          {isOrgAdmin ? (
+          {canManageTeams ? (
             <>
               <p className="text-slate-400 text-sm max-w-xs mx-auto mb-6">Create your first team to start organizing users.</p>
               <button onClick={() => setShowCreateModal(true)} className="text-blue-600 font-bold hover:text-blue-700 underline">
