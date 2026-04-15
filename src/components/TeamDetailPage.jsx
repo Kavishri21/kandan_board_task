@@ -191,7 +191,7 @@ export default function TeamDetailPage({ team, onBack }) {
         Back to Teams
       </button>
 
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8 mb-8 overflow-hidden relative">
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8 mb-8 relative">
         <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
           <svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
         </div>
@@ -201,11 +201,11 @@ export default function TeamDetailPage({ team, onBack }) {
           <p className="text-slate-500 font-medium">Manage team members and roles</p>
         </div>
 
-        <div className="mt-8 space-y-px bg-slate-100 rounded-2xl overflow-hidden border border-slate-200">
+        <div className="mt-8 space-y-px bg-slate-100 rounded-2xl border border-slate-200">
           {!teamData.members || teamData.members.length === 0 ? (
             <div className="bg-white p-12 text-center text-slate-500">No members found.</div>
           ) : (
-            teamData.members.map(memberObj => {
+            teamData.members.map((memberObj, index) => {
               const member = findUserById(memberObj.userId);
               if (!member) return null;
 
@@ -213,7 +213,13 @@ export default function TeamDetailPage({ team, onBack }) {
               const isCreator = member.id === creatorId;
 
               return (
-                <div key={member.id} className="bg-white px-6 py-5 flex items-center justify-between hover:bg-slate-50/50 transition-colors group">
+                <div 
+                  key={member.id} 
+                  className={`bg-white px-6 py-5 flex items-center justify-between hover:bg-slate-50/50 transition-colors group
+                    ${index === 0 ? 'rounded-t-2xl' : ''} 
+                    ${index === teamData.members.length - 1 ? 'rounded-b-2xl' : ''}
+                  `}
+                >
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center font-bold uppercase">
                       {member.name.charAt(0)}
