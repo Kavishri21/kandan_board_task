@@ -244,7 +244,7 @@ export default function TeamDetailPage({ team, onBack }) {
                         className="border border-slate-200 text-sm font-medium rounded-lg px-2 py-1 bg-white focus:ring-2 focus:ring-blue-100 outline-none text-slate-700"
                       >
                         <option value="CONTRIBUTOR">Contributor</option>
-                        <option value="LEAD">Team Lead</option>
+                        <option value="LEAD">Lead</option>
                       </select>
                     ) : (
                       <span className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-widest border ${

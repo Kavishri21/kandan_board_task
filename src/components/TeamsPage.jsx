@@ -90,7 +90,7 @@ function CreateTeamModal({ isOpen, onClose, allUsers, onTeamCreated, currentUser
 
   if (!isOpen) return null;
 
-  const selectableUsers = allUsers.filter(u => u.id !== currentUser?.id);
+  const selectableUsers = allUsers.filter(u => u.id !== currentUser?.id && u.globalRole !== "ORG_ADMIN");
   const creatorUser = allUsers.find(u => u.id === currentUser?.id);
 
   const toggleUser = (userId) => {
@@ -185,7 +185,7 @@ function AddMembersModal({ isOpen, onClose, team, allUsers, onMembersAdded }) {
 
   // Users not already in this team
   const existingMemberIds = new Set((team.members || []).map(m => m.userId));
-  const availableUsers = allUsers.filter(u => !existingMemberIds.has(u.id));
+  const availableUsers = allUsers.filter(u => !existingMemberIds.has(u.id) && u.globalRole !== "ORG_ADMIN");
 
   const toggleUser = (userId) => {
     const next = new Set(selectedUserIds);
