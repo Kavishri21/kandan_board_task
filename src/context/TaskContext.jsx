@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useContext } from "react";
+import { createContext, useState, useEffect, useContext, useRef } from "react";
 import AuthContext from "./AuthContext";
 import {
   fetchTasks,
@@ -17,10 +17,14 @@ function TaskProvider(props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const lastFetchParamsRef = useRef({ teamId: undefined, createdByMe: false });
+
   // ----------------------------------------------------------------
   // Load tasks — accepts optional filter params
   // ----------------------------------------------------------------
   function loadTasks(teamId, createdByMe = false) {
+    // Remember these params so the polling interval re-uses them
+    lastFetchParamsRef.current = { teamId, createdByMe };
     setLoading(true);
     fetchTasks(teamId, createdByMe)
       .then(function (data) {
@@ -35,7 +39,22 @@ function TaskProvider(props) {
   }
 
   useEffect(function () {
+    // Initial load
     loadTasks();
+
+    // ---- POLLING ----
+    // Every 15 seconds, silently re-fetch using the same params
+    // that were last used (respects active manager filter).
+    // No loading spinner shown — board updates quietly in background.
+    const interval = setInterval(function () {
+      const { teamId, createdByMe } = lastFetchParamsRef.current;
+      fetchTasks(teamId, createdByMe)
+        .then(function (data) { setTasks(data); })
+        .catch(function (err) { console.error("Background poll error:", err); });
+    }, 15000); // 15 seconds
+
+    // Cleanup: stop polling when component unmounts
+    return function () { clearInterval(interval); };
   }, []);
 
   // ----------------------------------------------------------------
