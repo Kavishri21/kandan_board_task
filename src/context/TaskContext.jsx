@@ -18,11 +18,11 @@ function TaskProvider(props) {
   const [error, setError] = useState(null);
 
   // ----------------------------------------------------------------
-  // Load all user-scoped tasks from MongoDB on initial mount
+  // Load tasks — accepts optional filter params
   // ----------------------------------------------------------------
-  useEffect(function () {
+  function loadTasks(teamId, createdByMe = false) {
     setLoading(true);
-    fetchTasks()
+    fetchTasks(teamId, createdByMe)
       .then(function (data) {
         setTasks(data);
         setLoading(false);
@@ -32,6 +32,10 @@ function TaskProvider(props) {
         setError("Could not connect to backend. Is Spring Boot running?");
         setLoading(false);
       });
+  }
+
+  useEffect(function () {
+    loadTasks();
   }, []);
 
   // ----------------------------------------------------------------
@@ -155,6 +159,7 @@ function TaskProvider(props) {
         deleteTask,
         updateTask,
         updateTaskStatus,   // <-- new: only for drag-and-drop
+        loadTasks,          // <-- for manager filter re-fetch
         openModal,
         closeModal,
         selectedTask,

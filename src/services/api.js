@@ -73,8 +73,12 @@ export async function registerUser(userData) {
 
 
 
-export async function fetchTasks(teamId) {
-  const url = teamId ? `${BASE_URL}/tasks?teamId=${teamId}` : `${BASE_URL}/tasks`;
+export async function fetchTasks(teamId, createdByMe = false) {
+  const params = new URLSearchParams();
+  if (teamId) params.set("teamId", teamId);
+  if (createdByMe) params.set("createdByMe", "true");
+  const query = params.toString() ? `?${params.toString()}` : "";
+  const url = `${BASE_URL}/tasks${query}`;
   const response = await fetch(url, {
     method: "GET",
     headers: getHeaders(),

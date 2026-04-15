@@ -6,25 +6,101 @@ import TaskHistoryModal from "./components/TaskHistoryModal";
 import UsersPage from "./components/UsersPage";
 import TeamsPage from "./components/TeamsPage";
 import TeamDetailPage from "./components/TeamDetailPage";
-import { useContext, useState, useEffect } from "react";
+import { useContext, useState, useEffect, useRef } from "react";
 import TaskContext from "./context/TaskContext";
 import AuthContext from "./context/AuthContext";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { fetchTeams } from "./services/api";
 
 import { DndContext, TouchSensor, MouseSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import Column from "./components/Column";
 
 function App() {
-  const { tasks, addTask, deleteTask, openModal, selectedTask, updateTask, updateTaskStatus, closeModal, loading, error } = useContext(TaskContext);
-  const { logout } = useContext(AuthContext);
+  const { tasks, addTask, deleteTask, openModal, selectedTask, updateTask, updateTaskStatus, closeModal, loading, error, loadTasks } = useContext(TaskContext);
+  const { user: currentUser, logout } = useContext(AuthContext);
   
   const [pendingBacklogTask, setPendingBacklogTask] = useState(null);
   const [historyTask, setHistoryTask] = useState(null);
   const [currentPage, setCurrentPage] = useState("board");
   const [viewingTeam, setViewingTeam] = useState(null);
+
+  // Manager / OrgAdmin filter state
+  const isManager = currentUser?.globalRole === "MANAGER";
+  const isOrgAdmin = currentUser?.globalRole === "ORG_ADMIN";
+  const canFilter = isManager || isOrgAdmin;
+  const [filterTeams, setFilterTeams] = useState([]);       // teams to show in dropdown
+  const [activeFilter, setActiveFilter] = useState(canFilter ? { type: "myself" } : null);   // null = personal board
+  const [filterOpen, setFilterOpen] = useState(false);
+  const filterRef = useRef(null);
+
+  // Load teams for filter dropdown
+  useEffect(() => {
+    if (!canFilter) return;
+    fetchTeams().then(allTeams => {
+      if (isOrgAdmin) {
+        setFilterTeams(allTeams);
+      } else {
+        // Manager: only teams they created or are LEAD of
+        const myTeams = allTeams.filter(t =>
+          t.createdByUserId === currentUser?.id ||
+          t.members?.some(m => m.userId === currentUser?.id && m.teamRole === "LEAD")
+        );
+        setFilterTeams(myTeams);
+      }
+    }).catch(() => {});
+  }, [canFilter, currentUser?.id]);
+
+  // Close filter dropdown on outside click
+  useEffect(() => {
+    function handleClick(e) {
+      if (filterRef.current && !filterRef.current.contains(e.target)) setFilterOpen(false);
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  function handleFilterSelect(filter) {
+    setActiveFilter(filter);
+    setFilterOpen(false);
+    if (!filter) {
+      // Personal board
+      loadTasks();
+    } else if (filter.type === "myself") {
+      // Only tasks assigned to me (no teamId, client-side filtered)
+      loadTasks(null, false);
+    } else if (filter.type === "team") {
+      if (isOrgAdmin) {
+        // ORG_ADMIN: all tasks in that team
+        loadTasks(filter.teamId, false);
+      } else {
+        // MANAGER: only tasks they created for that team
+        loadTasks(filter.teamId, true);
+      }
+    }
+  }
+
+  // If filter is "myself", filter client-side to just my tasks
+  const displayedTasks = (activeFilter?.type === "myself")
+    ? tasks.filter(t => t.userId === currentUser?.id)
+    : tasks;
+
+  // Board header label
+  const boardLabel = !activeFilter
+    ? "My Board"
+    : activeFilter.type === "myself"
+    ? "My Tasks"
+    : `Team: ${activeFilter.teamName}`;
   
+  const boardSubLabel = !activeFilter
+    ? "Your personal task view across all teams."
+    : activeFilter.type === "myself"
+    ? "Tasks assigned to you."
+    : isOrgAdmin
+    ? `All tasks in ${activeFilter.teamName}.`
+    : `Tasks you delegated to ${activeFilter.teamName}.`;
+
   const handlePageChange = (page) => {
     setCurrentPage(page);
     setViewingTeam(null);
@@ -147,11 +223,72 @@ function App() {
             <header className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h1 className="text-2xl font-extrabold tracking-tight text-slate-800">
-                  My Board
+                  {boardLabel}
                 </h1>
-                <p className="text-sm text-slate-400 font-medium mt-0.5">Your personal task view across all teams.</p>
+                <p className="text-sm text-slate-400 font-medium mt-0.5">{boardSubLabel}</p>
               </div>
-              <div className="flex shrink-0">
+              <div className="flex items-center gap-3 shrink-0">
+
+                {/* Filter Dropdown — only for MANAGER and ORG_ADMIN */}
+                {canFilter && (
+                  <div className="relative" ref={filterRef}>
+                    <button
+                      onClick={() => setFilterOpen(v => !v)}
+                      className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium border text-sm transition-all ${
+                        activeFilter
+                          ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                          : "bg-white text-slate-600 border-slate-200 hover:border-indigo-400 hover:text-indigo-600"
+                      }`}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                      {activeFilter ? (activeFilter.type === "myself" ? "Myself" : activeFilter.teamName) : "Filter View"}
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+
+                    {filterOpen && (
+                      <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden py-1">
+                        {/* My Board (reset) */}
+                        <button
+                          onClick={() => handleFilterSelect(null)}
+                          className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${
+                            !activeFilter ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
+                          }`}
+                        >
+                          My Board (Personal)
+                        </button>
+
+                        {/* Myself option */}
+                        <button
+                          onClick={() => handleFilterSelect({ type: "myself" })}
+                          className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${
+                            activeFilter?.type === "myself" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
+                          }`}
+                        >
+                          Myself
+                        </button>
+
+                        {filterTeams.length > 0 && (
+                          <>
+                            <div className="border-t border-slate-100 my-1" />
+                            <p className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Teams</p>
+                            {filterTeams.map(team => (
+                              <button
+                                key={team.id}
+                                onClick={() => handleFilterSelect({ type: "team", teamId: team.id, teamName: team.name })}
+                                className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${
+                                  activeFilter?.teamId === team.id ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
+                                }`}
+                              >
+                                {team.name}
+                              </button>
+                            ))}
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <AddTaskForm addTask={addTask} />
               </div>
             </header>
@@ -159,16 +296,16 @@ function App() {
             <DndContext sensors={sensors} onDragEnd={handleDragEnd} modifiers={[restrictToWindowEdges]}>
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
                 <Column title="To Do" status="todo"
-                  tasks={tasks.filter(t => t.status === "todo")}
+                  tasks={displayedTasks.filter(t => t.status === "todo")}
                   deleteTask={deleteTask} openModal={openModal} openHistoryModal={setHistoryTask} />
                 <Column title="In Progress" status="inprogress"
-                  tasks={tasks.filter(t => t.status === "inprogress")}
+                  tasks={displayedTasks.filter(t => t.status === "inprogress")}
                   deleteTask={deleteTask} openModal={openModal} openHistoryModal={setHistoryTask} />
                 <Column title="Done" status="done"
-                  tasks={tasks.filter(t => t.status === "done")}
+                  tasks={displayedTasks.filter(t => t.status === "done")}
                   deleteTask={deleteTask} openModal={openModal} openHistoryModal={setHistoryTask} />
                 <Column title="Backlog" status="backlog"
-                  tasks={tasks.filter(t => t.status === "backlog")}
+                  tasks={displayedTasks.filter(t => t.status === "backlog")}
                   deleteTask={deleteTask} openModal={openModal} openHistoryModal={setHistoryTask} />
               </div>
             </DndContext>
