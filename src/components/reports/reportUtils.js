@@ -16,6 +16,17 @@
  */
 
 // ─────────────────────────────────────────────────────────────────────────────
+// HELPER: Convert a Date object to a "YYYY-MM-DD" string using LOCAL time
+// (NOT UTC) so that IST and other timezone users get the correct calendar date.
+// ─────────────────────────────────────────────────────────────────────────────
+function toLocalDateKey(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // HELPER: Find when a task was completed (first "done" statusHistory entry)
 // Returns Date object or null if the task was never marked done.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -26,20 +37,22 @@ export function getCompletedDate(task) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// HELPER: Generate an array of date strings for each day between start and end
-// Returns array of "YYYY-MM-DD" strings
+// HELPER: Generate an array of local date strings for each day between start and end
+// Uses LOCAL time (not UTC) so date boundaries match the user's calendar exactly.
+// Returns array of "YYYY-MM-DD" strings.
 // ─────────────────────────────────────────────────────────────────────────────
 export function generateDateRange(fromDate, toDate) {
   const dates = [];
-  // Clone to avoid mutating the input
+  // Start at local midnight on fromDate
   const current = new Date(fromDate);
   current.setHours(0, 0, 0, 0);
 
+  // End at local end-of-day on toDate
   const end = new Date(toDate);
   end.setHours(23, 59, 59, 999);
 
   while (current <= end) {
-    dates.push(current.toISOString().split("T")[0]); // "YYYY-MM-DD"
+    dates.push(toLocalDateKey(current)); // ← local date, not UTC
     current.setDate(current.getDate() + 1);
   }
   return dates;
@@ -175,9 +188,10 @@ export function computeDailyCompletionData(tasks, fromDate, toDate) {
     const doneDate = getCompletedDate(task);
     if (!doneDate) return; // not completed, skip
 
-    const dayKey = doneDate.toISOString().split("T")[0];
+    // Use LOCAL date key so the day matches the user's timezone (fixes IST shift)
+    const dayKey = toLocalDateKey(doneDate);
 
-    // Only count if it falls in our date range
+    // Only count if the completion day falls within our displayed range
     if (!dateKeys.includes(dayKey)) return;
 
     if (!completionMap[dayKey]) {

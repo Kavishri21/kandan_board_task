@@ -6,6 +6,8 @@ import {
   exportToCSV,
 } from "./reports/reportUtils";
 import SummaryCards from "./reports/SummaryCards";
+import PriorityLineChart from "./reports/PriorityLineChart";
+import CompletionBarChart from "./reports/CompletionBarChart";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: Get default "from" date (30 days ago as "YYYY-MM-DD")
@@ -314,12 +316,22 @@ export default function ReportsPage({ currentUser }) {
     return null;
   }, [topFilter, selectedTeamId, subView, selectedEmployeeId, canManage]);
 
-  // ── Compute filtered tasks (drives all 3 components) ─────
+  // ── Compute filtered tasks (drives Summary Cards + Bar Chart) ─────
   const filteredTasks = useMemo(() => {
-    if (!filterState) return []; // waiting for employee selection
+    if (!filterState) return [];
     const bySelection = filterTasksBySelection(allTasks, filterState, currentUser);
     return applyDateRange(bySelection, dateFrom, dateTo);
   }, [allTasks, filterState, currentUser, dateFrom, dateTo]);
+
+  // ── Tasks for Line Chart: role-filtered but NOT date-ranged ────────
+  // The line chart needs tasks that were COMPLETED within the date window,
+  // regardless of when they were created. If we applied the createdAt
+  // date filter, tasks created before the window but completed today
+  // would be excluded and silently missed.
+  const selectionFilteredTasks = useMemo(() => {
+    if (!filterState) return [];
+    return filterTasksBySelection(allTasks, filterState, currentUser);
+  }, [allTasks, filterState, currentUser]);
 
   // ── Team members for the employee picker (Step 4) ─────────
   const teamMembersForPicker = useMemo(() => {
@@ -490,20 +502,14 @@ export default function ReportsPage({ currentUser }) {
 
           {/* Charts Row — Phase 5 & 6 */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-              <p className="text-sm font-semibold text-slate-700 mb-1">Task Completion by Priority</p>
-              <p className="text-xs text-slate-400 mb-4">Daily completed tasks — High / Medium / Low</p>
-              <div className="h-52 bg-slate-50 rounded-xl border border-dashed border-slate-200 flex items-center justify-center">
-                <p className="text-slate-300 text-sm font-medium">Line Chart — Phase 5</p>
-              </div>
-            </div>
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-              <p className="text-sm font-semibold text-slate-700 mb-1">Completion Time by Priority</p>
-              <p className="text-xs text-slate-400 mb-4">Overall / Average time to complete tasks</p>
-              <div className="h-52 bg-slate-50 rounded-xl border border-dashed border-slate-200 flex items-center justify-center">
-                <p className="text-slate-300 text-sm font-medium">Bar Chart — Phase 6</p>
-              </div>
-            </div>
+            {/* Line Chart — Phase 5 ✅ */}
+            <PriorityLineChart
+              tasks={selectionFilteredTasks}
+              dateFrom={dateFrom}
+              dateTo={dateTo}
+            />
+            {/* Bar Chart — Phase 6 ✅ */}
+            <CompletionBarChart tasks={filteredTasks} />
           </div>
         </div>
       )}
