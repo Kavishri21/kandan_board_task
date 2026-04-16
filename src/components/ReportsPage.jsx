@@ -5,6 +5,7 @@ import {
   applyDateRange,
   exportToCSV,
 } from "./reports/reportUtils";
+import SummaryCards from "./reports/SummaryCards";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: Get default "from" date (30 days ago as "YYYY-MM-DD")
@@ -484,15 +485,8 @@ export default function ReportsPage({ currentUser }) {
       {(topFilter === "individual" || (selectedTeamId && (subView !== "employeewise" || selectedEmployeeId))) && (
         <div className="space-y-6">
 
-          {/* Summary Cards — Phase 4 */}
-          <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-            {["Tasks Assigned", "Tasks Completed", "Tasks Pending", "In Backlog"].map((label) => (
-              <div key={label} className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-                <p className="text-sm font-medium text-slate-400 mb-3">{label}</p>
-                <div className="w-10 h-6 bg-slate-100 rounded-lg animate-pulse" />
-              </div>
-            ))}
-          </div>
+          {/* Summary Cards — Phase 4 ✅ */}
+          <SummaryCards tasks={filteredTasks} />
 
           {/* Charts Row — Phase 5 & 6 */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
