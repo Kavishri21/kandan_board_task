@@ -258,9 +258,9 @@ export function computeCompletionTimes(tasks) {
 export function computeOverallTime(completionTimes) {
   const sum = arr => arr.reduce((acc, val) => acc + val, 0);
   return {
-    high:   parseFloat(sum(completionTimes.high).toFixed(1)),
-    medium: parseFloat(sum(completionTimes.medium).toFixed(1)),
-    low:    parseFloat(sum(completionTimes.low).toFixed(1)),
+    high:   parseFloat(sum(completionTimes.high).toFixed(2)),
+    medium: parseFloat(sum(completionTimes.medium).toFixed(2)),
+    low:    parseFloat(sum(completionTimes.low).toFixed(2)),
   };
 }
 
@@ -274,9 +274,9 @@ export function computeAverageTime(completionTimes) {
   const avg = arr =>
     arr.length === 0 ? 0 : arr.reduce((acc, val) => acc + val, 0) / arr.length;
   return {
-    high:   parseFloat(avg(completionTimes.high).toFixed(1)),
-    medium: parseFloat(avg(completionTimes.medium).toFixed(1)),
-    low:    parseFloat(avg(completionTimes.low).toFixed(1)),
+    high:   parseFloat(avg(completionTimes.high).toFixed(2)),
+    medium: parseFloat(avg(completionTimes.medium).toFixed(2)),
+    low:    parseFloat(avg(completionTimes.low).toFixed(2)),
   };
 }
 

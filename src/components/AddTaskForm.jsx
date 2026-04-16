@@ -40,10 +40,7 @@ function AddTaskForm(props) {
     try {
       const teams = await fetchTeams();
       setUserTeams(teams);
-      // Auto-select first team if available
-      if (teams.length > 0) {
-        setSelectedTeamId(teams[0].id);
-      }
+      // Do NOT auto-select a team — let the user choose Personal Task or a team
     } catch (err) {
       console.error("Failed to load teams", err);
     } finally {
@@ -79,7 +76,9 @@ function AddTaskForm(props) {
     setDescription("");
     setPriority("high");
     setSelectedTeamId("");
-    setAssignedToId("");
+    // Reset to self (not empty) — the selectedTeamId useEffect won't re-run
+    // if teamId was already "", so we must explicitly set the default assignee here.
+    setAssignedToId(currentUser?.id || "");
     setTeamMembers([]);
     setUserTeams([]);
     setError("");
@@ -90,11 +89,6 @@ function AddTaskForm(props) {
     if (e) e.preventDefault();
     if (title.trim() === "") {
       setError("Please enter a title for the task.");
-      return;
-    }
-    // Only require team selection if the user actually has teams to choose from
-    if (userTeams.length > 0 && !selectedTeamId) {
-      setError("Please select a team for this task.");
       return;
     }
     if (!assignedToId) {
@@ -200,7 +194,7 @@ function AddTaskForm(props) {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Team *</label>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Team</label>
                   <select
                     className="w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:border-blue-500 outline-none transition-all text-slate-700 bg-white cursor-pointer"
                     value={selectedTeamId}
@@ -210,10 +204,10 @@ function AddTaskForm(props) {
                     {isLoadingTeams ? (
                       <option>Loading teams...</option>
                     ) : userTeams.length === 0 ? (
-                      <option value="">No teams available</option>
+                      <option value="">No teams — Personal Task</option>
                     ) : (
                       <>
-                        <option value="">Select a team</option>
+                        <option value="">Personal Task (No Team)</option>
                         {userTeams.map(team => (
                           <option key={team.id} value={team.id}>{team.name}</option>
                         ))}
@@ -261,7 +255,7 @@ function AddTaskForm(props) {
               <button
                 type="submit"
                 className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow-sm transition-colors disabled:opacity-50"
-                disabled={!title.trim() || !assignedToId || (userTeams.length > 0 && !selectedTeamId)}
+                disabled={!title.trim() || !assignedToId}
               >
                 Create Task
               </button>

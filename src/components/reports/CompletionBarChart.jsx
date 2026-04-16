@@ -177,7 +177,7 @@ export default function CompletionBarChart({ tasks }) {
                 cursor={{ fill: "#f8fafc" }}
               />
 
-              <Bar dataKey="value" radius={[8, 8, 0, 0]} label={<BarLabel />}>
+              <Bar dataKey="value" radius={[8, 8, 0, 0]} label={<BarLabel />} minPointSize={6}>
                 {chartData.map((entry) => {
                   const config = PRIORITY_CONFIG.find(p => p.label === entry.label);
                   return (

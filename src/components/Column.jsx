@@ -13,7 +13,7 @@ function Column(props) {
       ref={setNodeRef}
       className="bg-slate-100/50 p-4 md:p-5 rounded-2xl border border-slate-200 flex flex-col min-h-[500px]"
     >
-      <div className="sticky top-0 bg-slate-100/90 backdrop-blur-sm z-10 pt-2 pb-4 mb-4 flex items-center justify-center gap-2 border-b border-slate-200/50">
+      <div className="pt-2 pb-4 mb-4 flex items-center justify-center gap-2 border-b border-slate-200/50">
         <h2 className="font-bold text-slate-700 uppercase tracking-wider text-lg">
           {title} <span className="mx-1 text-slate-400">-</span>
         </h2>
