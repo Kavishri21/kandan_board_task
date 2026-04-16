@@ -286,12 +286,13 @@ export function computeAverageTime(completionTimes) {
 // Accepts the final filtered + date-ranged tasks array.
 // Triggers a browser download of a .csv file.
 // ─────────────────────────────────────────────────────────────────────────────
-export function exportToCSV(tasks, filename) {
+export function exportToCSV(tasks, filename, allUsers = [], allTeams = []) {
   const headers = [
+    "User Name",
     "Task Title",
     "Priority",
     "Status",
-    "Team ID",
+    "Team Name",
     "Created Date",
     "Completed Date",
     "Time to Complete (days)",
@@ -304,24 +305,38 @@ export function exportToCSV(tasks, filename) {
     });
   };
 
+  const escapeCSV = (val) => {
+    if (val === null || val === undefined) return '""';
+    const str = String(val);
+    // Wrap in double quotes and escape any internal double quotes by doubling them
+    return `"${str.replace(/"/g, '""')}"`;
+  };
+
   const rows = tasks.map(task => {
     const doneDate = getCompletedDate(task);
     const daysToComplete = doneDate
       ? ((doneDate.getTime() - new Date(task.createdAt).getTime()) / (1000 * 60 * 60 * 24)).toFixed(1)
       : "-";
 
+    // Resolve Names
+    const userName = allUsers.find(u => u.id === task.userId)?.name || "Unknown";
+    const teamName = task.teamId
+      ? (allTeams.find(t => t.id === task.teamId)?.name || "Team Not Found")
+      : "Personal";
+
     return [
-      `"${(task.title || "").replace(/"/g, '""')}"`, // escape quotes in title
-      task.priority || "medium",
-      task.status || "-",
-      task.teamId || "Personal",
-      formatDateCell(task.createdAt),
-      doneDate ? formatDateCell(doneDate.toISOString()) : "-",
-      daysToComplete,
+      escapeCSV(userName),
+      escapeCSV(task.title),
+      escapeCSV(task.priority || "medium"),
+      escapeCSV(task.status || "-"),
+      escapeCSV(teamName),
+      escapeCSV(formatDateCell(task.createdAt)),
+      escapeCSV(doneDate ? formatDateCell(doneDate.toISOString()) : "-"),
+      escapeCSV(daysToComplete),
     ].join(",");
   });
 
-  const csvContent = [headers.join(","), ...rows].join("\n");
+  const csvContent = [headers.map(escapeCSV).join(","), ...rows].join("\n");
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
 

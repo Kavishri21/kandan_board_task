@@ -388,7 +388,7 @@ export default function ReportsPage({ currentUser }) {
   function handleExportCSV() {
     if (filteredTasks.length === 0) return;
     const label = currentViewLabel.replace(/[^a-z0-9]/gi, "-").toLowerCase();
-    exportToCSV(filteredTasks, `kanban-report-${label}-${dateTo}.csv`);
+    exportToCSV(filteredTasks, `kanban-report-${label}-${dateTo}.csv`, allUsers, myTeams);
   }
 
   // ── Loading / error states ────────────────────────────────
