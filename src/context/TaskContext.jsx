@@ -51,7 +51,7 @@ function TaskProvider(props) {
       fetchTasks(teamId, createdByMe)
         .then(function (data) { setTasks(data); })
         .catch(function (err) { console.error("Background poll error:", err); });
-    }, 15000); // 15 seconds
+    }, 5000); // 5 seconds
 
     // Cleanup: stop polling when component unmounts
     return function () { clearInterval(interval); };
