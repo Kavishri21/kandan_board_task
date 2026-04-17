@@ -28,7 +28,7 @@ function TaskModal(props) {
       description: description,
       reason: reason,
       priority: priority,
-      dueDate: hasDueDate === "yes" ? `${dueDate}T23:59:59Z` : null
+      dueDate: hasDueDate === "yes" ? `${dueDate}T00:00:00Z` : null
     };
 
     props.updateTask(updatedTask);

@@ -110,7 +110,7 @@ function AddTaskForm(props) {
       status: "todo",
       priority,
       userId: assignedToId,
-      dueDate: hasDueDate === "yes" ? `${dueDate}T23:59:59Z` : null,
+      dueDate: hasDueDate === "yes" ? `${dueDate}T00:00:00Z` : null,
       // Only include teamId if one is selected
       ...(selectedTeamId ? { teamId: selectedTeamId } : {}),
     };

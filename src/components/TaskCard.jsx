@@ -60,7 +60,12 @@ function TaskCard(props) {
         <div className="mt-4 flex items-center justify-between">
           <div className={`flex items-center gap-2 text-xs font-semibold px-2 py-1 rounded-md transition-all ${
             (() => {
-              const diffDays = Math.ceil((new Date(task.dueDate) - new Date()) / (1000 * 60 * 60 * 24));
+              const targetDate = new Date(task.dueDate);
+              const targetUTC = Date.UTC(targetDate.getUTCFullYear(), targetDate.getUTCMonth(), targetDate.getUTCDate());
+              const now = new Date();
+              const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+              const diffDays = Math.ceil((targetUTC - todayUTC) / (1000 * 60 * 60 * 24));
+              
               return diffDays === 1 ? 'bg-red-50 text-red-600 ring-1 ring-red-200 animate-pulse' : 'bg-slate-50 text-slate-500';
             })()
           }`}>
@@ -71,11 +76,15 @@ function TaskCard(props) {
               <line x1="3" y1="10" x2="21" y2="10"></line>
             </svg>
             <span>
-              {new Date(task.dueDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+              {new Date(task.dueDate).toLocaleDateString('en-GB', { timeZone: 'UTC', day: 'numeric', month: 'short' })}
               {" "}
               {(() => {
-                const diffTime = new Date(task.dueDate) - new Date();
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                const targetDate = new Date(task.dueDate);
+                const targetUTC = Date.UTC(targetDate.getUTCFullYear(), targetDate.getUTCMonth(), targetDate.getUTCDate());
+                const now = new Date();
+                const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+                const diffDays = Math.ceil((targetUTC - todayUTC) / (1000 * 60 * 60 * 24));
+                
                 if (diffDays < 30) {
                   return `(${diffDays} day${diffDays === 1 ? '' : 's'})`;
                 } else {
