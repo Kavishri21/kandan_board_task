@@ -66,6 +66,9 @@ function TaskCard(props) {
               const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
               const diffDays = Math.ceil((targetUTC - todayUTC) / (1000 * 60 * 60 * 24));
               
+              if (diffDays <= 0) {
+                return 'bg-red-600 text-white shadow-sm ring-2 ring-red-300 animate-pulse';
+              }
               return diffDays === 1 ? 'bg-red-50 text-red-600 ring-1 ring-red-200 animate-pulse' : 'bg-slate-50 text-slate-500';
             })()
           }`}>
@@ -85,7 +88,9 @@ function TaskCard(props) {
                 const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
                 const diffDays = Math.ceil((targetUTC - todayUTC) / (1000 * 60 * 60 * 24));
                 
-                if (diffDays < 30) {
+                if (diffDays <= 0) {
+                  return "(OVERDUE)";
+                } else if (diffDays < 30) {
                   return `(${diffDays} day${diffDays === 1 ? '' : 's'})`;
                 } else {
                   const months = Math.floor(diffDays / 30);

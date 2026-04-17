@@ -25,6 +25,21 @@ function Column(props) {
       <div className="flex flex-col gap-3">
         {[...tasks]
           .sort(function(a, b) {
+            const checkOverdue = (task) => {
+              if (!task.dueDate) return false;
+              const targetDate = new Date(task.dueDate);
+              const targetUTC = Date.UTC(targetDate.getUTCFullYear(), targetDate.getUTCMonth(), targetDate.getUTCDate());
+              const now = new Date();
+              const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+              return (targetUTC - todayUTC) <= 0;
+            };
+
+            const aOverdue = checkOverdue(a);
+            const bOverdue = checkOverdue(b);
+            
+            if (aOverdue && !bOverdue) return -1;
+            if (!aOverdue && bOverdue) return 1;
+
             const priorityOrder = { high: 1, medium: 2, low: 3 };
             return (priorityOrder[a.priority] || 4) - (priorityOrder[b.priority] || 4);
           })
