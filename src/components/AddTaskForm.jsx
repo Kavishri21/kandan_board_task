@@ -8,6 +8,8 @@ function AddTaskForm(props) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("high");
+  const [hasDueDate, setHasDueDate] = useState("no");
+  const [dueDate, setDueDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedTeamId, setSelectedTeamId] = useState("");
   const [assignedToId, setAssignedToId] = useState("");
   const [isFormVisible, setIsFormVisible] = useState(false);
@@ -75,6 +77,8 @@ function AddTaskForm(props) {
     setTitle("");
     setDescription("");
     setPriority("high");
+    setHasDueDate("no");
+    setDueDate(new Date().toISOString().split('T')[0]);
     setSelectedTeamId("");
     // Reset to self (not empty) — the selectedTeamId useEffect won't re-run
     // if teamId was already "", so we must explicitly set the default assignee here.
@@ -91,6 +95,10 @@ function AddTaskForm(props) {
       setError("Please enter a title for the task.");
       return;
     }
+    if (description.trim() === "") {
+      setError("Please enter a description for the task.");
+      return;
+    }
     if (!assignedToId) {
       setError("Please select who to assign this task to.");
       return;
@@ -102,6 +110,7 @@ function AddTaskForm(props) {
       status: "todo",
       priority,
       userId: assignedToId,
+      dueDate: hasDueDate === "yes" ? `${dueDate}T23:59:59Z` : null,
       // Only include teamId if one is selected
       ...(selectedTeamId ? { teamId: selectedTeamId } : {}),
     };
@@ -126,7 +135,7 @@ function AddTaskForm(props) {
 
       {isFormVisible && createPortal(
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex justify-center items-center z-[100] p-4 text-left">
-          <form onSubmit={handleAdd} className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-md border border-slate-200">
+          <form onSubmit={handleAdd} className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-md border border-slate-200 max-h-[90vh] overflow-y-auto">
 
             <div className="flex justify-between items-center mb-5">
               <h2 className="font-bold text-slate-800 text-xl tracking-tight">Create New Task</h2>
@@ -164,18 +173,50 @@ function AddTaskForm(props) {
 
               {/* Description */}
               <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Description</label>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Description *</label>
                 <textarea
                   placeholder="Add some details..."
                   rows="2"
-                  maxLength={200}
+                  maxLength={150}
                   className="w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all placeholder:text-slate-400 text-slate-600 resize-none"
                   value={description}
-                  onChange={e => setDescription(e.target.value)}
+                  onChange={e => { setDescription(e.target.value); if (error) setError(""); }}
                 />
-                <div className={`text-right text-xs mt-1 font-medium ${description.length >= 200 ? 'text-red-500' : description.length >= 180 ? 'text-amber-500' : 'text-slate-400'}`}>
-                  {description.length} / 200
+                <div className={`text-right text-xs mt-1 font-medium ${description.length >= 150 ? 'text-red-500' : description.length >= 135 ? 'text-amber-500' : 'text-slate-400'}`}>
+                  {description.length} / 150
                 </div>
+              </div>
+
+              {/* Due Date Option (Horizontal Yes/No) */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5 text-left">Due Date? *</label>
+                <div className="flex bg-slate-100 p-1 rounded-lg w-full max-w-[200px]">
+                  <button
+                    type="button"
+                    onClick={() => setHasDueDate("yes")}
+                    className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${hasDueDate === "yes" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                  >
+                    Yes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setHasDueDate("no")}
+                    className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${hasDueDate === "no" ? "bg-white text-slate-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                  >
+                    No
+                  </button>
+                </div>
+                
+                {hasDueDate === "yes" && (
+                  <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <input
+                      type="date"
+                      className="w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-slate-700"
+                      value={dueDate}
+                      onChange={e => setDueDate(e.target.value)}
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Priority + Team — side by side */}
@@ -255,7 +296,7 @@ function AddTaskForm(props) {
               <button
                 type="submit"
                 className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium shadow-sm transition-colors disabled:opacity-50"
-                disabled={!title.trim() || !assignedToId}
+                disabled={!title.trim() || !description.trim() || !assignedToId}
               >
                 Create Task
               </button>
