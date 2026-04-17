@@ -60,6 +60,9 @@ function TaskCard(props) {
         <div className="mt-4 flex items-center justify-between">
           <div className={`flex items-center gap-2 text-xs font-semibold px-2 py-1 rounded-md transition-all ${
             (() => {
+              if (task.status === "done") {
+                return 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200';
+              }
               const targetDate = new Date(task.dueDate);
               const targetUTC = Date.UTC(targetDate.getUTCFullYear(), targetDate.getUTCMonth(), targetDate.getUTCDate());
               const now = new Date();
@@ -82,6 +85,9 @@ function TaskCard(props) {
               {new Date(task.dueDate).toLocaleDateString('en-GB', { timeZone: 'UTC', day: 'numeric', month: 'short' })}
               {" "}
               {(() => {
+                if (task.status === "done") {
+                  return "(Completed)";
+                }
                 const targetDate = new Date(task.dueDate);
                 const targetUTC = Date.UTC(targetDate.getUTCFullYear(), targetDate.getUTCMonth(), targetDate.getUTCDate());
                 const now = new Date();
