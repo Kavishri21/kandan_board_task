@@ -5,7 +5,7 @@ function TaskDetailsModal(props) {
   const { task, currentUser, teamMembers, initialTab, closeModal } = props;
   const { addComment, markCommentAsRead } = useContext(TaskContext);
   
-  const [activeTab, setActiveTab] = useState(initialTab || "activity");
+  const [activeTab, setActiveTab] = useState(initialTab || "tasks");
   const [commentText, setCommentText] = useState("");
   const [showMentions, setShowMentions] = useState(false);
   const [mentionQuery, setMentionQuery] = useState("");
@@ -235,19 +235,19 @@ function TaskDetailsModal(props) {
 
           <div className="flex items-center gap-6">
             <button 
-              onClick={() => handleTabChange("activity")}
-              className={`pb-4 text-sm font-black tracking-widest uppercase transition-all relative ${activeTab === "activity" ? "text-blue-600" : "text-slate-400 hover:text-slate-600"}`}
-            >
-              Activity
-              {activeTab === "activity" && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />}
-            </button>
-            <div className="h-6 w-px bg-slate-200 mb-4" />
-            <button 
               onClick={() => handleTabChange("tasks")}
               className={`pb-4 text-sm font-black tracking-widest uppercase transition-all relative ${activeTab === "tasks" ? "text-blue-600" : "text-slate-400 hover:text-slate-600"}`}
             >
               Tasks
               {activeTab === "tasks" && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />}
+            </button>
+            <div className="h-6 w-px bg-slate-200 mb-4" />
+            <button 
+              onClick={() => handleTabChange("activity")}
+              className={`pb-4 text-sm font-black tracking-widest uppercase transition-all relative ${activeTab === "activity" ? "text-blue-600" : "text-slate-400 hover:text-slate-600"}`}
+            >
+              Activity
+              {activeTab === "activity" && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full" />}
             </button>
           </div>
         </div>

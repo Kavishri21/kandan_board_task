@@ -82,7 +82,7 @@ function App() {
   const [activeId, setActiveId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [allUsers, setAllUsers] = useState([]);
-  const [historyTab, setHistoryTab] = useState("activity");
+  const [historyTab, setHistoryTab] = useState("tasks");
 
   // Manager / OrgAdmin filter state
   const isManager = currentUser?.globalRole === "MANAGER";
@@ -433,25 +433,25 @@ function App() {
                 <Column title="To Do" status="todo"
                   tasks={searchedTasks.filter(t => t.status === "todo")}
                   deleteTask={setTaskToDelete} openModal={openModal} 
-                  openHistoryModal={(task, tab) => { setHistoryTask(task); setHistoryTab(tab || "activity"); }} 
+                  openHistoryModal={(task, tab) => { setHistoryTask(task); setHistoryTab(tab || "tasks"); }} 
                   isSearching={!!searchQuery}
                   currentUser={currentUser} />
                 <Column title="In Progress" status="inprogress"
                   tasks={searchedTasks.filter(t => t.status === "inprogress")}
                   deleteTask={setTaskToDelete} openModal={openModal} 
-                  openHistoryModal={(task, tab) => { setHistoryTask(task); setHistoryTab(tab || "activity"); }}
+                  openHistoryModal={(task, tab) => { setHistoryTask(task); setHistoryTab(tab || "tasks"); }}
                   isSearching={!!searchQuery}
                   currentUser={currentUser} />
                 <Column title="Done" status="done"
                   tasks={searchedTasks.filter(t => t.status === "done")}
                   deleteTask={setTaskToDelete} openModal={openModal} 
-                  openHistoryModal={(task, tab) => { setHistoryTask(task); setHistoryTab(tab || "activity"); }}
+                  openHistoryModal={(task, tab) => { setHistoryTask(task); setHistoryTab(tab || "tasks"); }}
                   isSearching={!!searchQuery}
                   currentUser={currentUser} />
                 <Column title="Backlog" status="backlog"
                   tasks={searchedTasks.filter(t => t.status === "backlog")}
                   deleteTask={setTaskToDelete} openModal={openModal} 
-                  openHistoryModal={(task, tab) => { setHistoryTask(task); setHistoryTab(tab || "activity"); }}
+                  openHistoryModal={(task, tab) => { setHistoryTask(task); setHistoryTab(tab || "tasks"); }}
                   isSearching={!!searchQuery}
                   currentUser={currentUser} />
               </div>
