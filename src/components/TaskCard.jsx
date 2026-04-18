@@ -1,6 +1,8 @@
+import React, { useState } from "react";
 import { useDraggable } from "@dnd-kit/core";
 
 function TaskCard(props) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const task = props.task;
   const { attributes, listeners, setNodeRef, transform } = useDraggable({id: task.id});
 
@@ -62,9 +64,27 @@ function TaskCard(props) {
         <h3 className="font-extrabold text-slate-800 text-lg leading-tight mb-1.5" title={task.title}>
           {task.title}
         </h3>
-        <p className="text-[13px] text-slate-500 leading-relaxed line-clamp-3">
+        <p className={`text-[13px] text-slate-500 leading-relaxed overflow-hidden ${!isExpanded ? 'line-clamp-3' : ''}`}>
           {task.description}
         </p>
+        {!isExpanded && task.description && task.description.length > 80 && (
+          <button 
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); setIsExpanded(true); }}
+            className="text-[12px] font-bold text-blue-500 hover:text-blue-600 mt-1 cursor-pointer"
+          >
+            ...more
+          </button>
+        )}
+        {isExpanded && (
+          <button 
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); setIsExpanded(false); }}
+            className="text-[12px] font-bold text-blue-500 hover:text-blue-600 mt-1 cursor-pointer"
+          >
+            Show less
+          </button>
+        )}
       </div>
 
       {/* Bottom Row: Due Date */}
