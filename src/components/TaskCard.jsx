@@ -95,9 +95,8 @@ function TaskCard(props) {
         )}
       </div>
 
-      {/* Bottom Row: Due Date & Task ID */}
-      {(task.dueDate || task.taskID) && (
-        <div className="pt-3 border-t border-slate-200/40 flex items-center justify-between">
+      {/* Bottom Row: Due Date & Task ID & Comments - Always visible now */}
+      <div className="pt-3 border-t border-slate-200/40 flex items-center justify-between">
           {/* Due Date (Left) */}
           {task.dueDate ? (
             <div className={`flex items-center gap-2 text-[11px] font-bold px-2 py-1 rounded-lg ${
@@ -149,9 +148,33 @@ function TaskCard(props) {
             </div>
           ) : <div />}
 
-          {/* Task ID is now integrated into the title */}
+          {/* Comment Badge (Right) */}
+          <div className="flex items-center gap-1.5 overflow-hidden">
+            {(task.comments?.length > 0 || true) && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  props.openHistoryModal(task, "tasks");
+                }}
+                className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-all border ${
+                  (() => {
+                    const hasUnread = task.comments?.some(c => c.mentionedUserIds?.includes(props.currentUser?.id) && !c.readBy?.includes(props.currentUser?.id));
+                    return hasUnread ? "bg-blue-50 border-blue-200 comment-unread-glow shadow-sm" : "bg-slate-50 border-slate-100 text-slate-400 hover:border-slate-300 hover:text-slate-600";
+                  })()
+                }`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span className="text-[10px] font-black">{task.comments?.length || 0}</span>
+              </button>
+            )}
+            
+            {/* Optional spacer if no ID but comments exist */}
+            {!task.taskID && <div className="flex-1" />}
+          </div>
         </div>
-      )}
+      
 
       {task.status === "backlog" && task.reason && (
         <div className="mt-3 pt-3 border-t border-slate-200/40">

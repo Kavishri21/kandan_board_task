@@ -45,3 +45,15 @@ html, body {
 .column-scroll:hover {
   scrollbar-color: var(--scrollbar-thumb, #cbd5e1) transparent;
 }
+
+@keyframes comment-glow {
+  0% { box-shadow: 0 0 2px #3b82f6; border-color: #93c5fd; }
+  50% { box-shadow: 0 0 10px #3b82f6; border-color: #3b82f6; }
+  100% { box-shadow: 0 0 2px #3b82f6; border-color: #93c5fd; }
+}
+
+.comment-unread-glow {
+  animation: comment-glow 2s infinite ease-in-out;
+  color: #2563eb !important;
+  background-color: #eff6ff !important;
+}

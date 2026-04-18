@@ -2,7 +2,7 @@ import TaskCard from "./components/TaskCard";
 import AddTaskForm from "./components/AddTaskForm";
 import TaskModal from "./components/TaskModal";
 import BacklogModal from "./components/BacklogModal";
-import TaskHistoryModal from "./components/TaskHistoryModal";
+import TaskDetailsModal from "./components/TaskDetailsModal";
 import UsersPage from "./components/UsersPage";
 import TeamsPage from "./components/TeamsPage";
 import TeamDetailPage from "./components/TeamDetailPage";
@@ -63,7 +63,7 @@ import TaskContext from "./context/TaskContext";
 import AuthContext from "./context/AuthContext";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { fetchTeams } from "./services/api";
+import { fetchTeams, fetchMembers } from "./services/api";
 
 import { DndContext, TouchSensor, MouseSensor, useSensor, useSensors, DragOverlay } from "@dnd-kit/core";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
@@ -81,6 +81,8 @@ function App() {
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [activeId, setActiveId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [allUsers, setAllUsers] = useState([]);
+  const [historyTab, setHistoryTab] = useState("activity");
 
   // Manager / OrgAdmin filter state
   const isManager = currentUser?.globalRole === "MANAGER";
@@ -91,22 +93,34 @@ function App() {
   const [filterOpen, setFilterOpen] = useState(false);
   const filterRef = useRef(null);
 
-  // Load teams for filter dropdown
+  // Load data for board filters and mentions
   useEffect(() => {
-    if (!canFilter) return;
+    // 1. Fetch all users for @mentions
+    fetchMembers().then(users => {
+      setAllUsers(users);
+    }).catch(() => {});
+
+    // 2. Fetch teams for filters and context
     fetchTeams().then(allTeams => {
+      // For mentioning, we use the raw list
+      // For the board filter dropdown, we apply logic:
       if (isOrgAdmin) {
         setFilterTeams(allTeams);
-      } else {
-        // Manager: only teams they created or are LEAD of
+      } else if (isManager) {
         const myTeams = allTeams.filter(t =>
           t.createdByUserId === currentUser?.id ||
           t.members?.some(m => m.userId === currentUser?.id && m.teamRole === "LEAD")
         );
         setFilterTeams(myTeams);
+      } else {
+        // Regular Employee: only teams they are part of
+        const myTeams = allTeams.filter(t => 
+          t.members?.some(m => m.userId === currentUser?.id)
+        );
+        setFilterTeams(myTeams);
       }
     }).catch(() => {});
-  }, [canFilter, currentUser?.id]);
+  }, [currentUser?.id, isOrgAdmin, isManager]);
 
   // Close filter dropdown on outside click
   useEffect(() => {
@@ -418,20 +432,28 @@ function App() {
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
                 <Column title="To Do" status="todo"
                   tasks={searchedTasks.filter(t => t.status === "todo")}
-                  deleteTask={setTaskToDelete} openModal={openModal} openHistoryModal={setHistoryTask} 
-                  isSearching={!!searchQuery} />
+                  deleteTask={setTaskToDelete} openModal={openModal} 
+                  openHistoryModal={(task, tab) => { setHistoryTask(task); setHistoryTab(tab || "activity"); }} 
+                  isSearching={!!searchQuery}
+                  currentUser={currentUser} />
                 <Column title="In Progress" status="inprogress"
                   tasks={searchedTasks.filter(t => t.status === "inprogress")}
-                  deleteTask={setTaskToDelete} openModal={openModal} openHistoryModal={setHistoryTask}
-                  isSearching={!!searchQuery} />
+                  deleteTask={setTaskToDelete} openModal={openModal} 
+                  openHistoryModal={(task, tab) => { setHistoryTask(task); setHistoryTab(tab || "activity"); }}
+                  isSearching={!!searchQuery}
+                  currentUser={currentUser} />
                 <Column title="Done" status="done"
                   tasks={searchedTasks.filter(t => t.status === "done")}
-                  deleteTask={setTaskToDelete} openModal={openModal} openHistoryModal={setHistoryTask}
-                  isSearching={!!searchQuery} />
+                  deleteTask={setTaskToDelete} openModal={openModal} 
+                  openHistoryModal={(task, tab) => { setHistoryTask(task); setHistoryTab(tab || "activity"); }}
+                  isSearching={!!searchQuery}
+                  currentUser={currentUser} />
                 <Column title="Backlog" status="backlog"
                   tasks={searchedTasks.filter(t => t.status === "backlog")}
-                  deleteTask={setTaskToDelete} openModal={openModal} openHistoryModal={setHistoryTask}
-                  isSearching={!!searchQuery} />
+                  deleteTask={setTaskToDelete} openModal={openModal} 
+                  openHistoryModal={(task, tab) => { setHistoryTask(task); setHistoryTab(tab || "activity"); }}
+                  isSearching={!!searchQuery}
+                  currentUser={currentUser} />
               </div>
 
               <DragOverlay dropAnimation={null}>
@@ -483,9 +505,20 @@ function App() {
       )}
 
       {historyTask && (
-        <TaskHistoryModal
-          task={historyTask}
-          closeModal={function() { setHistoryTask(null); }}
+        <TaskDetailsModal
+          task={tasks.find(t => t.id === historyTask.id) || historyTask}
+          currentUser={currentUser}
+          teamMembers={(() => {
+            if (!historyTask.teamId) return [];
+            const team = filterTeams.find(t => t.id === historyTask.teamId);
+            if (!team) return [];
+            return (team.members || []).map(m => {
+              const u = allUsers.find(user => user.id === m.userId);
+              return u ? u : null;
+            }).filter(Boolean);
+          })()}
+          initialTab={historyTab}
+          closeModal={function() { setHistoryTask(null); setHistoryTab("activity"); }}
         />
       )}
 

@@ -6,6 +6,8 @@ import {
   updateTask as apiUpdateTask,
   updateTaskStatus as apiUpdateTaskStatus,
   deleteTask as apiDeleteTask,
+  addComment as apiAddComment,
+  markCommentAsRead as apiMarkCommentAsRead,
 } from "../services/api";
 
 const TaskContext = createContext();
@@ -160,6 +162,46 @@ function TaskProvider(props) {
   }
 
   // ----------------------------------------------------------------
+  // COMMENTS Logic
+  // ----------------------------------------------------------------
+  function addComment(taskId, comment) {
+    return apiAddComment(taskId, comment)
+      .then(function (savedTask) {
+        setTasks(function (prev) {
+          return prev.map(function (task) {
+            if (task.id === savedTask.id) {
+              return savedTask;
+            }
+            return task;
+          });
+        });
+        return savedTask;
+      })
+      .catch(function (err) {
+        console.error("Failed to add comment:", err);
+        throw err;
+      });
+  }
+
+  function markCommentAsRead(taskId, commentId) {
+    return apiMarkCommentAsRead(taskId, commentId)
+      .then(function (savedTask) {
+        setTasks(function (prev) {
+          return prev.map(function (task) {
+            if (task.id === savedTask.id) {
+              return savedTask;
+            }
+            return task;
+          });
+        });
+        return savedTask;
+      })
+      .catch(function (err) {
+        console.error("Failed to mark comment as read:", err);
+      });
+  }
+
+  // ----------------------------------------------------------------
   // Modal helpers
   // ----------------------------------------------------------------
   function openModal(task) {
@@ -179,6 +221,8 @@ function TaskProvider(props) {
         updateTask,
         updateTaskStatus,   // <-- new: only for drag-and-drop
         loadTasks,          // <-- for manager filter re-fetch
+        addComment,         // <-- for TaskDetailsModal
+        markCommentAsRead,  // <-- for TaskDetailsModal
         openModal,
         closeModal,
         selectedTask,
