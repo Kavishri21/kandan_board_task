@@ -20,48 +20,60 @@ function TaskCard(props) {
       {...attributes}
       onClick={function(e) { e.stopPropagation(); props.openHistoryModal(task); }}
       className={
-        "bg-white p-4 rounded-xl border border-slate-200 mb-3 shadow-sm hover:shadow-md transition-shadow transition-colors duration-200 cursor-grab active:cursor-grabbing group border-l-4 " +
-        (task.priority === "high"
-          ? "border-l-red-500"
-          : task.priority === "medium"
-          ? "border-l-amber-400"
-          : "border-l-emerald-500")
+        "p-4 rounded-2xl border border-slate-100 mb-4 shadow-sm hover:shadow-md transition-all duration-300 cursor-grab active:cursor-grabbing group " +
+        (task.status === "todo" ? "bg-[#F0F7FF]" : 
+         task.status === "inprogress" ? "bg-[#FDF2F8]" : 
+         task.status === "done" ? "bg-[#ECFDF5]" : 
+         "bg-[#FFFBEB]")
       }
     >
 
-      <div className="flex justify-between items-start mb-2">
-        <h3 className="font-bold text-slate-800 text-lg leading-snug truncate pr-2" title={task.title}>
-          {task.title}
-        </h3>
+      {/* Top Row: Priority Badge & Actions */}
+      <div className="flex justify-between items-center mb-3">
+        <div className={
+          "text-[11px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg bg-white/60 backdrop-blur-sm shadow-sm border border-white/50 " +
+          (task.priority === "high" ? "text-red-500" : 
+           task.priority === "medium" ? "text-amber-500" : 
+           "text-emerald-500")
+        }>
+          {task.priority}
+        </div>
         
-        <div className="flex gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 shrink-0">
+        <div className="flex gap-2.5">
           <button
               onPointerDown={function(e) { e.stopPropagation(); }} 
               onClick={function(e) { e.stopPropagation(); props.openModal(task); }}
-              className="text-slate-400 hover:text-blue-500 transition-colors"
+              className="text-slate-400 hover:text-blue-500 transition-colors p-1"
               title="Edit">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
           </button>
           <button
               onPointerDown={function(e) { e.stopPropagation(); }}
               onClick={function(e) { e.stopPropagation(); props.deleteTask(task.id); }}
-              className="text-slate-400 hover:text-red-500 transition-colors"
+              className="text-slate-400 hover:text-red-500 transition-colors p-1"
               title="Delete">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
           </button>
         </div>
       </div>
 
-      <p className="text-sm text-slate-600 line-clamp-3 leading-relaxed">
-        {task.description}
-      </p>
+      {/* Middle Row: Title & Description */}
+      <div className="mb-4">
+        <h3 className="font-extrabold text-slate-800 text-lg leading-tight mb-1.5" title={task.title}>
+          {task.title}
+        </h3>
+        <p className="text-[13px] text-slate-500 leading-relaxed line-clamp-3">
+          {task.description}
+        </p>
+      </div>
 
+      {/* Bottom Row: Due Date */}
       {task.dueDate && (
-        <div className="mt-4 flex items-center justify-between">
-          <div className={`flex items-center gap-2 text-xs font-semibold px-2 py-1 rounded-md transition-all ${
+        <div className="pt-3 border-t border-slate-200/40 flex items-center justify-between">
+          <div className={`flex items-center gap-2 text-[11px] font-bold px-2 py-1 rounded-lg transition-all ${
             (() => {
               if (task.status === "done") {
-                return 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200';
+                return 'bg-emerald-100/50 text-emerald-600 ring-1 ring-emerald-200/50';
               }
               const targetDate = new Date(task.dueDate);
               const targetUTC = Date.UTC(targetDate.getUTCFullYear(), targetDate.getUTCMonth(), targetDate.getUTCDate());
@@ -70,18 +82,18 @@ function TaskCard(props) {
               const diffDays = Math.ceil((targetUTC - todayUTC) / (1000 * 60 * 60 * 24));
               
               if (diffDays <= 0) {
-                return 'bg-red-600 text-white shadow-sm ring-2 ring-red-300 animate-pulse';
+                return 'bg-red-600 text-white shadow-md ring-2 ring-red-300 animate-pulse';
               }
-              return diffDays === 1 ? 'bg-red-50 text-red-600 ring-1 ring-red-200 animate-pulse' : 'bg-slate-50 text-slate-500';
+              return diffDays === 1 ? 'bg-red-50 text-red-600 ring-1 ring-red-200 animate-pulse' : 'bg-white/60 text-slate-500 shadow-sm border border-white/50';
             })()
           }`}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
               <line x1="16" y1="2" x2="16" y2="6"></line>
               <line x1="8" y1="2" x2="8" y2="6"></line>
               <line x1="3" y1="10" x2="21" y2="10"></line>
             </svg>
-            <span>
+            <span className="uppercase tracking-wide">
               {new Date(task.dueDate).toLocaleDateString('en-GB', { timeZone: 'UTC', day: 'numeric', month: 'short' })}
               {" "}
               {(() => {
@@ -109,9 +121,9 @@ function TaskCard(props) {
       )}
 
       {task.status === "backlog" && task.reason && (
-        <div className="mt-3 pt-3 border-t border-slate-100">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-red-500 mb-1 block">Reason</span>
-          <p className="text-xs text-slate-600 italic line-clamp-2">"{task.reason}"</p>
+        <div className="mt-3 pt-3 border-t border-slate-200/40">
+          <span className="text-[10px] font-black uppercase tracking-widest text-red-500 mb-1 block">Reason</span>
+          <p className="text-[12px] text-slate-500 italic line-clamp-2">"{task.reason}"</p>
         </div>
       )}
 
