@@ -95,38 +95,15 @@ function TaskCard(props) {
         )}
       </div>
 
-      {/* Bottom Row: Due Date */}
-      {task.dueDate && (
+      {/* Bottom Row: Due Date & Task ID */}
+      {(task.dueDate || task.taskID) && (
         <div className="pt-3 border-t border-slate-200/40 flex items-center justify-between">
-          <div className={`flex items-center gap-2 text-[11px] font-bold px-2 py-1 rounded-lg ${
-            (() => {
-              if (task.status === "done") {
-                return 'bg-emerald-100/50 text-emerald-600 ring-1 ring-emerald-200/50';
-              }
-              const targetDate = new Date(task.dueDate);
-              const targetUTC = Date.UTC(targetDate.getUTCFullYear(), targetDate.getUTCMonth(), targetDate.getUTCDate());
-              const now = new Date();
-              const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-              const diffDays = Math.ceil((targetUTC - todayUTC) / (1000 * 60 * 60 * 24));
-              
-              if (diffDays <= 0) {
-                return 'bg-red-600 text-white shadow-md ring-2 ring-red-300';
-              }
-              return diffDays === 1 ? 'bg-red-50 text-red-600 ring-1 ring-red-200' : 'bg-white/60 text-slate-500 shadow-sm border border-white/50';
-            })()
-          }`}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
-            </svg>
-            <span className="uppercase tracking-wide">
-              {new Date(task.dueDate).toLocaleDateString('en-GB', { timeZone: 'UTC', day: 'numeric', month: 'short' })}
-              {" "}
-              {(() => {
+          {/* Due Date (Left) */}
+          {task.dueDate ? (
+            <div className={`flex items-center gap-2 text-[11px] font-bold px-2 py-1 rounded-lg ${
+              (() => {
                 if (task.status === "done") {
-                  return "(Completed)";
+                  return 'bg-emerald-100/50 text-emerald-600 ring-1 ring-emerald-200/50';
                 }
                 const targetDate = new Date(task.dueDate);
                 const targetUTC = Date.UTC(targetDate.getUTCFullYear(), targetDate.getUTCMonth(), targetDate.getUTCDate());
@@ -135,16 +112,55 @@ function TaskCard(props) {
                 const diffDays = Math.ceil((targetUTC - todayUTC) / (1000 * 60 * 60 * 24));
                 
                 if (diffDays <= 0) {
-                  return "(OVERDUE)";
-                } else if (diffDays < 30) {
-                  return `(${diffDays} day${diffDays === 1 ? '' : 's'})`;
-                } else {
-                  const months = Math.floor(diffDays / 30);
-                  return `(${months} month${months === 1 ? '' : 's'})`;
+                  return 'bg-red-600 text-white shadow-md ring-2 ring-red-300';
                 }
-              })()}
-            </span>
-          </div>
+                return diffDays === 1 ? 'bg-red-50 text-red-600 ring-1 ring-red-200' : 'bg-white/60 text-slate-500 shadow-sm border border-white/50';
+              })()
+            }`}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <span className="uppercase tracking-wide">
+                {new Date(task.dueDate).toLocaleDateString('en-GB', { timeZone: 'UTC', day: 'numeric', month: 'short' })}
+                {" "}
+                {(() => {
+                  if (task.status === "done") {
+                    return "(Completed)";
+                  }
+                  const targetDate = new Date(task.dueDate);
+                  const targetUTC = Date.UTC(targetDate.getUTCFullYear(), targetDate.getUTCMonth(), targetDate.getUTCDate());
+                  const now = new Date();
+                  const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+                  const diffDays = Math.ceil((targetUTC - todayUTC) / (1000 * 60 * 60 * 24));
+                  
+                  if (diffDays <= 0) {
+                    return "(OVERDUE)";
+                  } else if (diffDays < 30) {
+                    return `(${diffDays} day${diffDays === 1 ? '' : 's'})`;
+                  } else {
+                    const months = Math.floor(diffDays / 30);
+                    return `(${months} month${months === 1 ? '' : 's'})`;
+                  }
+                })()}
+              </span>
+            </div>
+          ) : <div />}
+
+          {/* Task ID (Right) */}
+          {task.taskID && (
+            <div className={
+              "text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg " +
+              (task.status === "todo" ? "bg-blue-50 text-blue-600 border border-blue-100" : 
+               task.status === "inprogress" ? "bg-purple-50 text-purple-600 border border-purple-100" : 
+               task.status === "done" ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : 
+               "bg-amber-50 text-amber-600 border border-amber-100")
+            }>
+              {task.taskID}
+            </div>
+          )}
         </div>
       )}
 
