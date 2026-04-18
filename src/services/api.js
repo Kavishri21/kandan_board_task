@@ -150,6 +150,27 @@ export async function markCommentAsRead(taskId, commentId) {
   return res.json();
 }
 
+export async function updateComment(taskId, commentId, comment) {
+  const response = await fetch(`${BASE_URL}/tasks/${taskId}/comments/${commentId}`, {
+    method: "PUT",
+    headers: getHeaders(),
+    body: JSON.stringify(comment),
+  });
+  const res = await handleResponse(response, "Failed to update comment");
+  if (!res) return null;
+  return res.json();
+}
+
+export async function deleteComment(taskId, commentId) {
+  const response = await fetch(`${BASE_URL}/tasks/${taskId}/comments/${commentId}`, {
+    method: "DELETE",
+    headers: getHeaders(),
+  });
+  const res = await handleResponse(response, "Failed to delete comment");
+  if (!res) return null;
+  return res.json();
+}
+
 // --- Invitation APIs ---
 
 export async function sendInvitation(name, email) {

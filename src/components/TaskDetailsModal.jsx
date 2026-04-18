@@ -1,11 +1,61 @@
 import { useState, useRef, useEffect, useContext } from "react";
+import { createPortal } from "react-dom";
 import TaskContext from "../context/TaskContext";
+
+function DeleteCommentModal({ isOpen, onConfirm, onClose }) {
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  if (!isOpen) return null;
+
+  async function handleConfirm() {
+    setIsDeleting(true);
+    await onConfirm();
+    setIsDeleting(false);
+    onClose();
+  }
+
+  return createPortal(
+    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex justify-center items-center z-[110] p-4 text-left animate-in fade-in duration-200">
+      <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm border border-slate-200 text-center transform transition-all animate-in zoom-in duration-200">
+        <div className="w-14 h-14 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4 mx-auto">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+        </div>
+        <h3 className="text-lg font-black text-slate-800 mb-2">Delete Comment?</h3>
+        <p className="text-slate-500 text-sm mb-6 font-medium leading-relaxed">
+          Are you sure you want to delete this comment? This action is permanent and cannot be undone.
+        </p>
+        <div className="flex gap-3">
+          <button 
+            onClick={onClose} 
+            className="flex-1 py-2 rounded-lg font-bold text-slate-500 hover:bg-slate-50 transition-colors uppercase text-xs tracking-widest"
+          >
+            Cancel
+          </button>
+          <button 
+            onClick={handleConfirm} 
+            disabled={isDeleting} 
+            className="flex-1 py-2 bg-red-500 text-white rounded-lg font-bold hover:bg-red-600 transition-all shadow-md active:scale-95 disabled:opacity-50 uppercase text-xs tracking-widest"
+          >
+            {isDeleting ? "Deleting..." : "Delete"}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
 
 function TaskDetailsModal(props) {
   const { task, currentUser, teamMembers, initialTab, closeModal } = props;
-  const { addComment, markCommentAsRead } = useContext(TaskContext);
+  const { addComment, markCommentAsRead, updateComment, deleteComment } = useContext(TaskContext);
   
   const [activeTab, setActiveTab] = useState(initialTab || "tasks");
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editingCommentText, setEditingCommentText] = useState("");
+  const [commentToDelete, setCommentToDelete] = useState(null);
   const [commentText, setCommentText] = useState("");
   const [showMentions, setShowMentions] = useState(false);
   const [mentionQuery, setMentionQuery] = useState("");
@@ -131,6 +181,53 @@ function TaskDetailsModal(props) {
     try {
         await addComment(task.id, newComment);
         setCommentText("");
+    } catch (err) {
+        console.error(err);
+    }
+  };
+
+  const handleEditComment = (comment) => {
+    setEditingCommentId(comment.id);
+    setEditingCommentText(comment.text);
+  };
+
+  const cancelEdit = () => {
+    setEditingCommentId(null);
+    setEditingCommentText("");
+  };
+
+  const saveEditedComment = async (commentId) => {
+    if (!editingCommentText.trim()) return;
+
+    // Extract mentions
+    const mentionedIds = [];
+    teamMembers.forEach(m => {
+        if (editingCommentText.includes(`@${m.name}`)) {
+            mentionedIds.push(m.id);
+        }
+    });
+
+    try {
+        await updateComment(task.id, commentId, {
+            text: editingCommentText,
+            mentionedUserIds: mentionedIds
+        });
+        setEditingCommentId(null);
+        setEditingCommentText("");
+    } catch (err) {
+        console.error(err);
+    }
+  };
+
+  const handleDeleteComment = (comment) => {
+    setCommentToDelete(comment);
+  };
+
+  const confirmDeleteComment = async () => {
+    if (!commentToDelete) return;
+    try {
+        await deleteComment(task.id, commentToDelete.id);
+        setCommentToDelete(null);
     } catch (err) {
         console.error(err);
     }
@@ -382,9 +479,43 @@ function TaskDetailsModal(props) {
                                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{formatTime(c.createdAt)}</span>
                                         {isUnread && <span className="px-1.5 py-0.5 bg-blue-600 text-white text-[9px] font-black uppercase rounded">New Mention</span>}
                                     </div>
-                                    <div className="text-[13px] text-slate-600 font-medium leading-relaxed bg-white p-3 rounded-2xl rounded-tl-none border border-slate-100 shadow-sm inline-block">
-                                        {renderCommentText(c.text)}
-                                    </div>
+                                    {editingCommentId === c.id ? (
+                                        <div className="mt-2 space-y-2">
+                                            <textarea
+                                                value={editingCommentText}
+                                                onChange={(e) => setEditingCommentText(e.target.value)}
+                                                className="w-full bg-white border border-blue-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all resize-none h-24 shadow-inner"
+                                            />
+                                            <div className="flex gap-2 justify-end">
+                                                <button onClick={cancelEdit} className="px-3 py-1.5 text-[11px] font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-wider">Cancel</button>
+                                                <button onClick={() => saveEditedComment(c.id)} className="px-3 py-1.5 bg-blue-600 text-white text-[11px] font-black rounded-lg hover:bg-blue-700 transition-all shadow-sm uppercase tracking-wider">Save Changes</button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="relative group/text">
+                                            <div className="text-[13px] text-slate-600 font-medium leading-relaxed bg-white p-3 rounded-2xl rounded-tl-none border border-slate-100 shadow-sm inline-block min-w-[120px]">
+                                                {renderCommentText(c.text)}
+                                            </div>
+                                            {c.authorId === currentUser?.id && (
+                                                <div className="absolute right-2 -bottom-2 flex items-center gap-1 opacity-0 group-hover/text:opacity-100 transition-opacity z-10">
+                                                    <button 
+                                                        onClick={() => handleEditComment(c)} 
+                                                        className="p-1.5 bg-white border border-slate-100 rounded-lg text-slate-400 hover:text-blue-500 hover:border-blue-100 shadow-sm transition-all"
+                                                        title="Edit Comment"
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                                    </button>
+                                                        <button 
+                                                            onClick={() => handleDeleteComment(c)} 
+                                                        className="p-1.5 bg-white border border-slate-100 rounded-lg text-slate-400 hover:text-red-500 hover:border-red-100 shadow-sm transition-all"
+                                                        title="Delete Comment"
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         );
@@ -402,6 +533,12 @@ function TaskDetailsModal(props) {
           )}
         </div>
       </div>
+
+      <DeleteCommentModal 
+        isOpen={!!commentToDelete}
+        onClose={() => setCommentToDelete(null)}
+        onConfirm={confirmDeleteComment}
+      />
     </div>
   );
 }

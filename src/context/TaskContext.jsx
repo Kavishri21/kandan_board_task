@@ -8,6 +8,8 @@ import {
   deleteTask as apiDeleteTask,
   addComment as apiAddComment,
   markCommentAsRead as apiMarkCommentAsRead,
+  updateComment as apiUpdateComment,
+  deleteComment as apiDeleteComment,
 } from "../services/api";
 
 const TaskContext = createContext();
@@ -201,6 +203,44 @@ function TaskProvider(props) {
       });
   }
 
+  function updateComment(taskId, commentId, comment) {
+    return apiUpdateComment(taskId, commentId, comment)
+      .then(function (savedTask) {
+        setTasks(function (prev) {
+          return prev.map(function (task) {
+            if (task.id === savedTask.id) {
+              return savedTask;
+            }
+            return task;
+          });
+        });
+        return savedTask;
+      })
+      .catch(function (err) {
+        console.error("Failed to update comment:", err);
+        throw err;
+      });
+  }
+
+  function deleteComment(taskId, commentId) {
+    return apiDeleteComment(taskId, commentId)
+      .then(function (savedTask) {
+        setTasks(function (prev) {
+          return prev.map(function (task) {
+            if (task.id === savedTask.id) {
+              return savedTask;
+            }
+            return task;
+          });
+        });
+        return savedTask;
+      })
+      .catch(function (err) {
+        console.error("Failed to delete comment:", err);
+        throw err;
+      });
+  }
+
   // ----------------------------------------------------------------
   // Modal helpers
   // ----------------------------------------------------------------
@@ -223,6 +263,8 @@ function TaskProvider(props) {
         loadTasks,          // <-- for manager filter re-fetch
         addComment,         // <-- for TaskDetailsModal
         markCommentAsRead,  // <-- for TaskDetailsModal
+        updateComment,      // <-- NEW
+        deleteComment,      // <-- NEW
         openModal,
         closeModal,
         selectedTask,
