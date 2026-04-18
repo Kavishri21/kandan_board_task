@@ -22,7 +22,8 @@ function TaskDetailsModal(props) {
         // Mark unread mentions as read when opening the tasks tab
         if (task.comments) {
             task.comments.forEach(comment => {
-                if (comment.mentionedUserIds?.includes(currentUser?.id) && !comment.readBy?.includes(currentUser?.id)) {
+                const isRequiredReader = (task.userId === currentUser?.id) || (comment.mentionedUserIds?.includes(currentUser?.id));
+                if (isRequiredReader && comment.authorId !== currentUser?.id && !comment.readBy?.includes(currentUser?.id)) {
                     markCommentAsRead(task.id, comment.id);
                 }
             });

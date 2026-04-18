@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useDraggable } from "@dnd-kit/core";
 
 function TaskCard(props) {
@@ -6,6 +6,24 @@ function TaskCard(props) {
   const task = props.task;
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({id: task.id});
   const isOverlay = props.isOverlay;
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  // Close menu on outside click
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Close menu when dragging starts
+  useEffect(() => {
+    if (isDragging) setMenuOpen(false);
+  }, [isDragging]);
 
   const style = (transform && !isOverlay)
   ? {
@@ -49,21 +67,35 @@ function TaskCard(props) {
           {task.priority}
         </div>
         
-        <div className="flex gap-2.5">
+        <div className="relative" ref={menuRef}>
           <button
-              onPointerDown={function(e) { e.stopPropagation(); }} 
-              onClick={function(e) { e.stopPropagation(); props.openModal(task); }}
-              className="text-slate-400 hover:text-blue-500 transition-colors p-1"
-              title="Edit">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+              onPointerDown={(e) => e.stopPropagation()} 
+              onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
+              className={`text-slate-400 hover:text-slate-600 transition-all p-1.5 rounded-lg hover:bg-slate-100/50 ${menuOpen ? 'bg-slate-100 text-slate-700' : ''}`}
+              title="More Actions">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
           </button>
-          <button
-              onPointerDown={function(e) { e.stopPropagation(); }}
-              onClick={function(e) { e.stopPropagation(); props.deleteTask(task.id); }}
-              className="text-slate-400 hover:text-red-500 transition-colors p-1"
-              title="Delete">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-          </button>
+
+          {menuOpen && (
+            <div className="absolute right-0 mt-1 w-36 bg-white border border-slate-200 rounded-xl shadow-xl z-[60] py-1.5 animate-in fade-in zoom-in-95 duration-100 origin-top-right">
+              <button
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); setMenuOpen(false); props.openModal(task); }}
+                className="w-full text-left px-3 py-2 text-sm font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 flex items-center gap-2 transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                Edit
+              </button>
+              <button
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => { e.stopPropagation(); setMenuOpen(false); props.deleteTask(task); }}
+                className="w-full text-left px-3 py-2 text-sm font-bold text-slate-600 hover:bg-red-50 hover:text-red-600 flex items-center gap-2 transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                Delete
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -158,7 +190,16 @@ function TaskCard(props) {
                 }}
                 className={`flex items-center gap-1 px-2 py-1 rounded-lg transition-all border ${
                   (() => {
-                    const hasUnread = task.comments?.some(c => c.mentionedUserIds?.includes(props.currentUser?.id) && !c.readBy?.includes(props.currentUser?.id));
+                    const hasUnread = task.comments?.some(c => {
+                      const requiredReaders = [];
+                      if (task.userId) requiredReaders.push(task.userId);
+                      if (c.mentionedUserIds?.length > 0) requiredReaders.push(...c.mentionedUserIds);
+                      
+                      // Global Glow shows if ANY required reader (except author) hasn't seen it yet
+                      return requiredReaders.some(id => 
+                        id !== c.authorId && !c.readBy?.includes(id)
+                      );
+                    });
                     return hasUnread ? "bg-blue-50 border-blue-200 comment-unread-glow shadow-sm" : "bg-slate-50 border-slate-100 text-slate-400 hover:border-slate-300 hover:text-slate-600";
                   })()
                 }`}

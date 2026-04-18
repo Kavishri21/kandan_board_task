@@ -54,10 +54,6 @@ function Column(props) {
           </h2>
         </div>
         
-        {/* Placeholder for optional column actions like the "+" in reference */}
-        <div className="w-6 h-6 rounded-lg bg-slate-50 flex items-center justify-center text-slate-300 cursor-not-allowed">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto column-scroll pr-1 flex flex-col gap-4">
