@@ -1,11 +1,18 @@
 import { useState, useContext, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import AuthContext from "../context/AuthContext";
 import { validateInviteToken, acceptInvitation } from "../services/api";
 import { toast } from "react-toastify";
 
 export default function AuthScreen() {
   const { login, signup, setUserFromInvite } = useContext(AuthContext);
-  const [isLogin, setIsLogin] = useState(true);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Determine mode based on URL path
+  const isSignupPage = location.pathname === "/signup";
+  const isInvitePage = location.pathname === "/accept-invite";
+  const isLogin = !isSignupPage && !isInvitePage;
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,7 +30,7 @@ export default function AuthScreen() {
 
   // On mount: check if URL has ?token= (invite link)
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(location.search);
     const token = params.get("token");
     if (token) {
       setInviteToken(token);
@@ -38,7 +45,7 @@ export default function AuthScreen() {
         })
         .finally(() => setTokenValidating(false));
     }
-  }, []);
+  }, [location.search]);
 
   // Check for logout reason (deactivation) on mount
   useEffect(() => {
@@ -60,8 +67,10 @@ export default function AuthScreen() {
       } else {
         await signup(name, email, password);
       }
+      // Successful login/signup will update the 'token' in AuthContext,
+      // which automatically triggers the redirect in main.jsx.
     } catch (err) {
-      toast.error(err.message);
+       toast.error(err.message);
     } finally {
       setIsLoading(false);
     }
@@ -242,16 +251,12 @@ export default function AuthScreen() {
 
         <div className="mt-8 text-sm text-slate-500 border-t border-slate-100 pt-6">
           {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
-          <button
-            type="button"
-            onClick={() => {
-              setIsLogin(!isLogin);
-              setError("");
-            }}
+          <Link
+            to={isLogin ? "/signup" : "/login"}
             className="text-blue-600 font-bold hover:text-blue-700 hover:underline transition-colors focus:outline-none"
           >
             {isLogin ? "Sign up" : "Sign in"}
-          </button>
+          </Link>
         </div>
       </div>
     </div>

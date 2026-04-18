@@ -8,6 +8,7 @@ import TeamsPage from "./components/TeamsPage";
 import TeamDetailPage from "./components/TeamDetailPage";
 import ReportsPage from "./components/ReportsPage";
 import { useContext, useState, useEffect, useRef } from "react";
+import { Routes, Route, Navigate, useNavigate, useParams, NavLink } from "react-router-dom";
 import { createPortal } from "react-dom";
 
 // --- Sub-component: Delete Task Confirmation Modal ---
@@ -76,8 +77,6 @@ function App() {
   const [pendingBacklogTask, setPendingBacklogTask] = useState(null);
   const [historyTask, setHistoryTask] = useState(null);
   const [taskToDelete, setTaskToDelete] = useState(null);
-  const [currentPage, setCurrentPage] = useState("board");
-  const [viewingTeam, setViewingTeam] = useState(null);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [activeId, setActiveId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -178,10 +177,7 @@ function App() {
     ? `All tasks in ${activeFilter.teamName}.`
     : `Tasks you delegated to ${activeFilter.teamName}.`;
 
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-    setViewingTeam(null);
-  };
+
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -260,46 +256,49 @@ function App() {
         </div>
 
         <div className="flex-1 flex flex-col gap-2">
-          <button
-            onClick={() => handlePageChange("board")}
-            title="Boards"
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium w-full text-left transition-colors overflow-hidden whitespace-nowrap ${
-              currentPage === "board" ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-100"
+          <NavLink
+            to="/"
+            title="Dashboard"
+            className={({ isActive }) => `flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold w-full text-left transition-all ${
+              isActive ? "bg-blue-600 text-white shadow-md shadow-blue-200" : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
             } ${isCollapsed ? 'justify-center px-0 text-center' : ''}`}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-            {!isCollapsed && <span>Boards</span>}
-          </button>
-          <button
-            onClick={() => handlePageChange("users")}
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+            {!isCollapsed && <span className="tracking-tight uppercase text-[10px]">Dashboard</span>}
+          </NavLink>
+
+          <NavLink
+            to="/users"
             title="Users"
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium w-full text-left transition-colors overflow-hidden whitespace-nowrap ${
-              currentPage === "users" ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-100"
+            className={({ isActive }) => `flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold w-full text-left transition-all ${
+              isActive ? "bg-blue-600 text-white shadow-md shadow-blue-200" : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
             } ${isCollapsed ? 'justify-center px-0 text-center' : ''}`}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-            {!isCollapsed && <span>Users</span>}
-          </button>
-          <button
-            onClick={() => handlePageChange("teams")}
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            {!isCollapsed && <span className="tracking-tight uppercase text-[10px]">Users</span>}
+          </NavLink>
+
+          <NavLink
+            to="/teams"
             title="Teams"
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium w-full text-left transition-colors overflow-hidden whitespace-nowrap ${
-              currentPage === "teams" ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-100"
+            className={({ isActive }) => `flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold w-full text-left transition-all ${
+              isActive ? "bg-blue-600 text-white shadow-md shadow-blue-200" : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
             } ${isCollapsed ? 'justify-center px-0 text-center' : ''}`}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-            {!isCollapsed && <span>Teams</span>}
-          </button>
-          <button
-            onClick={() => handlePageChange("reports")}
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            {!isCollapsed && <span className="tracking-tight uppercase text-[10px]">Teams</span>}
+          </NavLink>
+
+          <NavLink
+            to="/reports"
             title="Reports"
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium w-full text-left transition-colors overflow-hidden whitespace-nowrap ${
-              currentPage === "reports" ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-100"
+            className={({ isActive }) => `flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold w-full text-left transition-all ${
+              isActive ? "bg-blue-600 text-white shadow-md shadow-blue-200" : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
             } ${isCollapsed ? 'justify-center px-0 text-center' : ''}`}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-            {!isCollapsed && <span>Reports</span>}
-          </button>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+            {!isCollapsed && <span className="tracking-tight uppercase text-[10px]">Reports</span>}
+          </NavLink>
         </div>
  
         <button 
@@ -326,161 +325,156 @@ function App() {
           <button onClick={logout} className="text-sm font-bold text-slate-500 p-2">Logout</button>
         </div>
 
-        {currentPage === "board" && (
-          <>
-            <header className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h1 className="text-2xl font-extrabold tracking-tight text-slate-800">
-                  {boardLabel}
-                </h1>
-                <p className="text-sm text-slate-400 font-medium mt-0.5">{boardSubLabel}</p>
-              </div>
-              <div className="flex items-center gap-3 shrink-0">
-                {/* Search Bar */}
-                <div className="relative group hidden sm:block">
-                  <input 
-                    type="text" 
-                    placeholder="Search tasks..." 
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-10 py-2.5 w-64 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400 text-slate-700"
-                  />
-                  <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                  </div>
-                  {searchQuery && (
-                    <button 
-                      onClick={() => setSearchQuery("")}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                    </button>
-                  )}
+        <Routes>
+          <Route path="/" element={
+            <>
+              <header className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h1 className="text-2xl font-extrabold tracking-tight text-slate-800">
+                    {boardLabel}
+                  </h1>
+                  <p className="text-sm text-slate-400 font-medium mt-0.5">{boardSubLabel}</p>
                 </div>
-
-                {/* Filter Dropdown — only for MANAGER and ORG_ADMIN */}
-                {canFilter && (
-                  <div className="relative" ref={filterRef}>
-                    <button
-                      onClick={() => setFilterOpen(v => !v)}
-                      className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium border text-sm transition-all ${
-                        activeFilter
-                          ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
-                          : "bg-white text-slate-600 border-slate-200 hover:border-indigo-400 hover:text-indigo-600"
-                      }`}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-                      {activeFilter ? (activeFilter.type === "myself" ? "Myself" : activeFilter.teamName) : "Filter View"}
-                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                    </button>
-
-                    {filterOpen && (
-                      <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden py-1">
-                        {/* My Board (reset) */}
-                        <button
-                          onClick={() => handleFilterSelect(null)}
-                          className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${
-                            !activeFilter ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
-                          }`}
-                        >
-                          My Board (Personal)
-                        </button>
-
-                        {/* Myself option */}
-                        <button
-                          onClick={() => handleFilterSelect({ type: "myself" })}
-                          className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${
-                            activeFilter?.type === "myself" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
-                          }`}
-                        >
-                          Myself
-                        </button>
-
-                        {filterTeams.length > 0 && (
-                          <>
-                            <div className="border-t border-slate-100 my-1" />
-                            <p className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Teams</p>
-                            {filterTeams.map(team => (
-                              <button
-                                key={team.id}
-                                onClick={() => handleFilterSelect({ type: "team", teamId: team.id, teamName: team.name })}
-                                className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${
-                                  activeFilter?.teamId === team.id ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
-                                }`}
-                              >
-                                {team.name}
-                              </button>
-                            ))}
-                          </>
-                        )}
-                      </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  {/* Search Bar */}
+                  <div className="relative group hidden sm:block">
+                    <input 
+                      type="text" 
+                      placeholder="Search tasks..." 
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10 pr-10 py-2.5 w-64 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400 text-slate-700"
+                    />
+                    <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    </div>
+                    {searchQuery && (
+                      <button 
+                        onClick={() => setSearchQuery("")}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                      </button>
                     )}
                   </div>
-                )}
 
-                <AddTaskForm addTask={addTask} />
-              </div>
-            </header>
+                  {/* Filter Dropdown — only for MANAGER and ORG_ADMIN */}
+                  {canFilter && (
+                    <div className="relative" ref={filterRef}>
+                      <button
+                        onClick={() => setFilterOpen(v => !v)}
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium border text-sm transition-all ${
+                          activeFilter
+                            ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                            : "bg-white text-slate-600 border-slate-200 hover:border-indigo-400 hover:text-indigo-600"
+                        }`}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                        {activeFilter ? (activeFilter.type === "myself" ? "Myself" : activeFilter.teamName) : "Filter View"}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                      </button>
 
-            <DndContext 
-              sensors={sensors} 
-              onDragStart={handleDragStart} 
-              onDragEnd={handleDragEnd} 
-              onDragCancel={() => setActiveId(null)}
-              modifiers={[restrictToWindowEdges]}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
-                <Column title="To Do" status="todo"
-                  tasks={searchedTasks.filter(t => t.status === "todo")}
-                  deleteTask={setTaskToDelete} openModal={openModal} 
-                  openHistoryModal={(task, tab) => { setHistoryTask(task); setHistoryTab(tab || "tasks"); }} 
-                  isSearching={!!searchQuery}
-                  currentUser={currentUser} />
-                <Column title="In Progress" status="inprogress"
-                  tasks={searchedTasks.filter(t => t.status === "inprogress")}
-                  deleteTask={setTaskToDelete} openModal={openModal} 
-                  openHistoryModal={(task, tab) => { setHistoryTask(task); setHistoryTab(tab || "tasks"); }}
-                  isSearching={!!searchQuery}
-                  currentUser={currentUser} />
-                <Column title="Done" status="done"
-                  tasks={searchedTasks.filter(t => t.status === "done")}
-                  deleteTask={setTaskToDelete} openModal={openModal} 
-                  openHistoryModal={(task, tab) => { setHistoryTask(task); setHistoryTab(tab || "tasks"); }}
-                  isSearching={!!searchQuery}
-                  currentUser={currentUser} />
-                <Column title="Backlog" status="backlog"
-                  tasks={searchedTasks.filter(t => t.status === "backlog")}
-                  deleteTask={setTaskToDelete} openModal={openModal} 
-                  openHistoryModal={(task, tab) => { setHistoryTask(task); setHistoryTab(tab || "tasks"); }}
-                  isSearching={!!searchQuery}
-                  currentUser={currentUser} />
-              </div>
+                      {filterOpen && (
+                        <div className="absolute right-0 mt-2 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden py-1">
+                          {/* My Board (reset) */}
+                          <button
+                            onClick={() => handleFilterSelect(null)}
+                            className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${
+                              !activeFilter ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
+                            }`}
+                          >
+                            My Board (Personal)
+                          </button>
 
-              <DragOverlay dropAnimation={null}>
-                {activeId ? (
-                  <TaskCard 
-                    task={tasks.find(function(t) { return t.id === activeId; })} 
-                    isOverlay={true}
-                  />
-                ) : null}
-              </DragOverlay>
-            </DndContext>
-          </>
-        )}
+                          {/* Myself option */}
+                          <button
+                            onClick={() => handleFilterSelect({ type: "myself" })}
+                            className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${
+                              activeFilter?.type === "myself" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
+                            }`}
+                          >
+                            Myself
+                          </button>
 
-        {currentPage === "users" && <UsersPage />}
-        {currentPage === "teams" && !viewingTeam && (
-          <TeamsPage onViewTeam={(team) => setViewingTeam(team)} />
-        )}
-        {currentPage === "teams" && viewingTeam && (
-          <TeamDetailPage 
-            team={viewingTeam} 
-            onBack={() => setViewingTeam(null)} 
-          />
-        )}
-        {currentPage === "reports" && (
-          <ReportsPage currentUser={currentUser} />
-        )}
+                          {filterTeams.length > 0 && (
+                            <>
+                              <div className="border-t border-slate-100 my-1" />
+                              <p className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">Teams</p>
+                              {filterTeams.map(team => (
+                                <button
+                                  key={team.id}
+                                  onClick={() => handleFilterSelect({ type: "team", teamId: team.id, teamName: team.name })}
+                                  className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${
+                                    activeFilter?.teamId === team.id ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
+                                  }`}
+                                >
+                                  {team.name}
+                                </button>
+                              ))}
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <AddTaskForm addTask={addTask} />
+                </div>
+              </header>
+
+              <DndContext 
+                sensors={sensors} 
+                onDragStart={handleDragStart} 
+                onDragEnd={handleDragEnd} 
+                onDragCancel={() => setActiveId(null)}
+                modifiers={[restrictToWindowEdges]}
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
+                  <Column title="To Do" status="todo"
+                    tasks={searchedTasks.filter(t => t.status === "todo")}
+                    deleteTask={setTaskToDelete} openModal={openModal} 
+                    openHistoryModal={(task, tab) => { setHistoryTask(task); setHistoryTab(tab || "tasks"); }} 
+                    isSearching={!!searchQuery}
+                    currentUser={currentUser} />
+                  <Column title="In Progress" status="inprogress"
+                    tasks={searchedTasks.filter(t => t.status === "inprogress")}
+                    deleteTask={setTaskToDelete} openModal={openModal} 
+                    openHistoryModal={(task, tab) => { setHistoryTask(task); setHistoryTab(tab || "tasks"); }}
+                    isSearching={!!searchQuery}
+                    currentUser={currentUser} />
+                  <Column title="Done" status="done"
+                    tasks={searchedTasks.filter(t => t.status === "done")}
+                    deleteTask={setTaskToDelete} openModal={openModal} 
+                    openHistoryModal={(task, tab) => { setHistoryTask(task); setHistoryTab(tab || "tasks"); }}
+                    isSearching={!!searchQuery}
+                    currentUser={currentUser} />
+                  <Column title="Backlog" status="backlog"
+                    tasks={searchedTasks.filter(t => t.status === "backlog")}
+                    deleteTask={setTaskToDelete} openModal={openModal} 
+                    openHistoryModal={(task, tab) => { setHistoryTask(task); setHistoryTab(tab || "tasks"); }}
+                    isSearching={!!searchQuery}
+                    currentUser={currentUser} />
+                </div>
+
+                <DragOverlay dropAnimation={null}>
+                  {activeId ? (
+                    <TaskCard 
+                      task={tasks.find(function(t) { return t.id === activeId; })} 
+                      isOverlay={true}
+                    />
+                  ) : null}
+                </DragOverlay>
+              </DndContext>
+            </>
+          } />
+
+          <Route path="/users" element={<UsersPage />} />
+          <Route path="/teams" element={<TeamsPage />} />
+          <Route path="/teams/:teamId" element={<TeamDetailPageWrapper allTeams={filterTeams} />} />
+          <Route path="/reports" element={<ReportsPage currentUser={currentUser} />} />
+          
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </main>
 
       {selectedTask && (
@@ -530,21 +524,25 @@ function App() {
           onConfirm={deleteTask}
         />
       )}
-      <ToastContainer 
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-      />
+      
     </div>
     
   );
 }
 
 export default App;
+/**
+ * TeamDetailPageWrapper: Connects the URL :teamId parameter to the TeamDetailPage component.
+ */
+function TeamDetailPageWrapper({ allTeams }) {
+  const { teamId } = useParams();
+  const navigate = useNavigate();
+  const team = allTeams.find(t => t.id === teamId);
+  
+  if (!team) {
+    return <Navigate to="/teams" replace />;
+  }
+  
+  return <TeamDetailPage team={team} onBack={() => navigate("/teams")} />;
+}
+

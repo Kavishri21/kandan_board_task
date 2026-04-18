@@ -1,4 +1,5 @@
 import { useState, useEffect, useContext } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
 import {
   fetchTeams,
@@ -464,8 +465,9 @@ function TeamCard({ team, currentUser, allUsers, isOrgAdmin, canManageTeams, onV
 // ─────────────────────────────────────────────────────────────────────────────
 // Main TeamsPage Component
 // ─────────────────────────────────────────────────────────────────────────────
-export default function TeamsPage({ onViewTeam }) {
+export default function TeamsPage() {
   const { user: currentUser } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [teams, setTeams] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -572,7 +574,7 @@ export default function TeamsPage({ onViewTeam }) {
               allUsers={allUsers}
               isOrgAdmin={isOrgAdmin}
               canManageTeams={canManageTeams}
-              onViewTeam={onViewTeam}
+              onViewTeam={(team) => navigate(`/teams/${team.id}`)}
               onRename={setTeamToRename}
               onAddMembers={setTeamToAddMembers}
               onDelete={setTeamToDelete}
