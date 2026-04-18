@@ -87,13 +87,12 @@ export default function AuthScreen() {
     setInviteError("");
     try {
       const data = await acceptInvitation(inviteToken, password);
-      // Store token and user just like a normal login
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      // Remove the token from the URL cleanly
+      // Update context state and localStorage
+      setUserFromInvite(data.user, data.token);
+      // Clean up the URL and go to dashboard
       window.history.replaceState({}, document.title, window.location.pathname);
-      // Force page reload so AuthContext picks up the new token
-      window.location.reload();
+      navigate("/");
+      toast.success("Account setup successful! Welcome.");
     } catch (err) {
       setInviteError(err.message);
     } finally {

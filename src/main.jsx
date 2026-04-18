@@ -1,6 +1,6 @@
 import { StrictMode, useContext } from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom"
 import './index.css'
 import App from './App.jsx'
 import { TaskProvider } from "./context/TaskContext"
@@ -38,14 +38,18 @@ function ProtectedRoute({ children }) {
 
 function AppWrapper() {
   const { token } = useContext(AuthContext);
+  const location = useLocation();
+  const hasToken = new URLSearchParams(location.search).has("token");
   
   return (
     <Routes>
       {/* Auth Routes: Only accessible if logged out. If logged in, they redirect to dashboard. */}
       <Route path="/login" element={!token ? <AuthScreen /> : <Navigate to="/" replace />} />
       <Route path="/signup" element={!token ? <AuthScreen /> : <Navigate to="/" replace />} />
-      {/* Accept Invite Route - essentially a signup page with token logic */}
-      <Route path="/accept-invite" element={<AuthScreen />} />
+      
+      {/* Accept Invite Route - essentially a signup page with token logic. 
+          If logged in AND no token being processed, redirect to dashboard. */}
+      <Route path="/accept-invite" element={(!token || hasToken) ? <AuthScreen /> : <Navigate to="/" replace />} />
 
       {/* Main Dashboard: Catch-all to App.jsx for protected sub-routing */}
       <Route path="/*" element={
