@@ -70,7 +70,7 @@ function TaskCard(props) {
       {/* Middle Row: Title & Description */}
       <div className="mb-4">
         <h3 className="font-extrabold text-slate-800 text-lg leading-tight mb-1.5" title={task.title}>
-          {task.title}
+          {task.taskID ? `${task.taskID} - ` : ""}{task.title}
         </h3>
         <p className={`text-[13px] text-slate-500 leading-relaxed overflow-hidden ${!isExpanded ? 'line-clamp-3' : ''}`}>
           {task.description}
@@ -149,18 +149,7 @@ function TaskCard(props) {
             </div>
           ) : <div />}
 
-          {/* Task ID (Right) */}
-          {task.taskID && (
-            <div className={
-              "text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg " +
-              (task.status === "todo" ? "bg-blue-50 text-blue-600 border border-blue-100" : 
-               task.status === "inprogress" ? "bg-purple-50 text-purple-600 border border-purple-100" : 
-               task.status === "done" ? "bg-emerald-50 text-emerald-600 border border-emerald-100" : 
-               "bg-amber-50 text-amber-600 border border-amber-100")
-            }>
-              {task.taskID}
-            </div>
-          )}
+          {/* Task ID is now integrated into the title */}
         </div>
       )}
 
