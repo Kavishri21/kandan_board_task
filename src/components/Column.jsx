@@ -11,18 +11,50 @@ function Column(props) {
   return (
     <div
       ref={setNodeRef}
-      className="bg-slate-100/50 p-4 md:p-5 rounded-2xl border border-slate-200 flex flex-col min-h-[500px]"
+      className={
+        "p-5 rounded-2xl border-2 flex flex-col min-h-[550px] transition-colors duration-300 bg-white " +
+        (status === "todo" ? "border-blue-400/60 shadow-[0_8px_30px_rgb(59,130,246,0.05)]" : 
+         status === "inprogress" ? "border-purple-400/60 shadow-[0_8px_30px_rgb(192,132,252,0.05)]" : 
+         status === "done" ? "border-emerald-400/60 shadow-[0_8px_30px_rgb(52,211,153,0.05)]" : 
+         "border-amber-400/60 shadow-[0_8px_30px_rgb(251,191,36,0.05)]")
+      }
     >
-      <div className="pt-2 pb-4 mb-4 flex items-center justify-center gap-2 border-b border-slate-200/50">
-        <h2 className="font-bold text-slate-700 uppercase tracking-wider text-lg">
-          {title} <span className="mx-1 text-slate-400">-</span>
-        </h2>
-        <span className="bg-slate-200 text-slate-600 px-3 py-1 rounded-full text-base font-semibold shadow-sm">
-          {tasks.length}
-        </span>
+      <div className={
+        "pb-5 mb-5 flex items-center justify-between border-b-2 " +
+        (status === "todo" ? "border-blue-400/30" : 
+         status === "inprogress" ? "border-purple-400/30" : 
+         status === "done" ? "border-emerald-400/30" : 
+         "border-amber-400/30")
+      }>
+        <div className="flex items-center gap-3">
+          <div className={
+            "w-2.5 h-2.5 rounded-full shadow-sm " +
+            (status === "todo" ? "bg-blue-400" : 
+             status === "inprogress" ? "bg-purple-400" : 
+             status === "done" ? "bg-emerald-400" : 
+             "bg-amber-400")
+          }></div>
+          <h2 className="font-extrabold text-slate-800 capitalize tracking-tight text-lg flex items-center gap-2.5">
+            {title}
+            <span className={
+              "w-6 h-6 rounded-full flex items-center justify-center text-[12px] font-black text-white shadow-sm " +
+              (status === "todo" ? "bg-blue-400" : 
+               status === "inprogress" ? "bg-purple-400" : 
+               status === "done" ? "bg-emerald-400" : 
+               "bg-amber-400")
+            }>
+              {tasks.length}
+            </span>
+          </h2>
+        </div>
+        
+        {/* Placeholder for optional column actions like the "+" in reference */}
+        <div className="w-6 h-6 rounded-lg bg-slate-50 flex items-center justify-center text-slate-300 cursor-not-allowed">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </div>
       </div>
 
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-4">
         {[...tasks]
           .sort(function(a, b) {
             const checkOverdue = (task) => {
