@@ -4,25 +4,33 @@ import { useDraggable } from "@dnd-kit/core";
 function TaskCard(props) {
   const [isExpanded, setIsExpanded] = useState(false);
   const task = props.task;
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({id: task.id});
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({id: task.id});
+  const isOverlay = props.isOverlay;
 
-  const style = transform
+  const style = (transform && !isOverlay)
   ? {
       transform: "translate(" + transform.x + "px, " + transform.y + "px)",
       zIndex: 50,
       position: "relative"
     }
+  : isOverlay 
+  ? { transform: "rotate(2deg)", cursor: "grabbing" } 
   : undefined;
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      {...listeners}
-      {...attributes}
-      onClick={function(e) { e.stopPropagation(); props.openHistoryModal(task); }}
+      {...(isOverlay ? {} : listeners)}
+      {...(isOverlay ? {} : attributes)}
+      onClick={function(e) { 
+        if (isOverlay) return;
+        e.stopPropagation(); 
+        props.openHistoryModal(task); 
+      }}
       className={
-        "p-4 rounded-2xl border border-slate-100 mb-4 shadow-sm hover:shadow-md cursor-grab active:cursor-grabbing group " +
+        "p-4 rounded-2xl border border-slate-100 mb-4 shadow-sm hover:shadow-md cursor-grab active:cursor-grabbing group transition-opacity duration-200 " +
+        (isDragging && !isOverlay ? "opacity-0" : "opacity-100") + " " +
         (task.status === "todo" ? "bg-[#F0F7FF]" : 
          task.status === "inprogress" ? "bg-[#FDF2F8]" : 
          task.status === "done" ? "bg-[#ECFDF5]" : 

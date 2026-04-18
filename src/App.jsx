@@ -65,7 +65,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { fetchTeams } from "./services/api";
 
-import { DndContext, TouchSensor, MouseSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { DndContext, TouchSensor, MouseSensor, useSensor, useSensors, DragOverlay } from "@dnd-kit/core";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
 import Column from "./components/Column";
 
@@ -79,6 +79,7 @@ function App() {
   const [currentPage, setCurrentPage] = useState("board");
   const [viewingTeam, setViewingTeam] = useState(null);
   const [isCollapsed, setIsCollapsed] = useState(true);
+  const [activeId, setActiveId] = useState(null);
 
   // Manager / OrgAdmin filter state
   const isManager = currentUser?.globalRole === "MANAGER";
@@ -169,8 +170,13 @@ function App() {
     })
   );
 
+  function handleDragStart(event) {
+    setActiveId(event.active.id);
+  }
+
   function handleDragEnd(event) {
     const { active, over } = event;
+    setActiveId(null);
 
     if (!over) return;
 
@@ -373,7 +379,13 @@ function App() {
               </div>
             </header>
 
-            <DndContext sensors={sensors} onDragEnd={handleDragEnd} modifiers={[restrictToWindowEdges]}>
+            <DndContext 
+              sensors={sensors} 
+              onDragStart={handleDragStart} 
+              onDragEnd={handleDragEnd} 
+              onDragCancel={() => setActiveId(null)}
+              modifiers={[restrictToWindowEdges]}
+            >
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
                 <Column title="To Do" status="todo"
                   tasks={displayedTasks.filter(t => t.status === "todo")}
@@ -388,6 +400,15 @@ function App() {
                   tasks={displayedTasks.filter(t => t.status === "backlog")}
                   deleteTask={setTaskToDelete} openModal={openModal} openHistoryModal={setHistoryTask} />
               </div>
+
+              <DragOverlay dropAnimation={null}>
+                {activeId ? (
+                  <TaskCard 
+                    task={tasks.find(function(t) { return t.id === activeId; })} 
+                    isOverlay={true}
+                  />
+                ) : null}
+              </DragOverlay>
             </DndContext>
           </>
         )}

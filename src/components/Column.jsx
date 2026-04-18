@@ -11,8 +11,14 @@ function Column(props) {
   return (
     <div
       ref={setNodeRef}
+      style={{
+        "--scrollbar-thumb": (status === "todo" ? "#60a5fa" : 
+                             status === "inprogress" ? "#f472b6" : 
+                             status === "done" ? "#34d399" : 
+                             "#fbbf24")
+      }}
       className={
-        "p-5 rounded-2xl border-2 flex flex-col min-h-[550px] transition-colors duration-300 bg-white " +
+        "p-5 rounded-2xl border-2 flex flex-col h-[calc(100vh-180px)] transition-colors duration-300 bg-white " +
         (status === "todo" ? "border-blue-400/60 shadow-[0_8px_30px_rgb(59,130,246,0.05)]" : 
          status === "inprogress" ? "border-purple-400/60 shadow-[0_8px_30px_rgb(192,132,252,0.05)]" : 
          status === "done" ? "border-emerald-400/60 shadow-[0_8px_30px_rgb(52,211,153,0.05)]" : 
@@ -20,7 +26,7 @@ function Column(props) {
       }
     >
       <div className={
-        "pb-5 mb-5 flex items-center justify-between border-b-2 " +
+        "pb-5 mb-5 flex items-center justify-between border-b-2 shrink-0 " +
         (status === "todo" ? "border-blue-400/30" : 
          status === "inprogress" ? "border-purple-400/30" : 
          status === "done" ? "border-emerald-400/30" : 
@@ -54,7 +60,7 @@ function Column(props) {
         </div>
       </div>
 
-      <div className="flex flex-col gap-4">
+      <div className="flex-1 overflow-y-auto column-scroll pr-1 flex flex-col gap-4">
         {[...tasks]
           .sort(function(a, b) {
             const checkOverdue = (task) => {
