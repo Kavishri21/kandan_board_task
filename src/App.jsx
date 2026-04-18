@@ -80,6 +80,7 @@ function App() {
   const [viewingTeam, setViewingTeam] = useState(null);
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [activeId, setActiveId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Manager / OrgAdmin filter state
   const isManager = currentUser?.globalRole === "MANAGER";
@@ -137,9 +138,16 @@ function App() {
   }
 
   // If filter is "myself", filter client-side to just my tasks
-  const displayedTasks = (activeFilter?.type === "myself")
+   const displayedTasks = (activeFilter?.type === "myself")
     ? tasks.filter(t => t.userId === currentUser?.id)
     : tasks;
+
+  // Search Filter
+  const searchedTasks = displayedTasks.filter(t => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return (t.title?.toLowerCase().includes(q) || t.description?.toLowerCase().includes(q));
+  });
 
   // Board header label
   const boardLabel = !activeFilter
@@ -314,6 +322,27 @@ function App() {
                 <p className="text-sm text-slate-400 font-medium mt-0.5">{boardSubLabel}</p>
               </div>
               <div className="flex items-center gap-3 shrink-0">
+                {/* Search Bar */}
+                <div className="relative group hidden sm:block">
+                  <input 
+                    type="text" 
+                    placeholder="Search tasks..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 pr-10 py-2.5 w-64 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400 text-slate-700"
+                  />
+                  <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                  </div>
+                  {searchQuery && (
+                    <button 
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                  )}
+                </div>
 
                 {/* Filter Dropdown — only for MANAGER and ORG_ADMIN */}
                 {canFilter && (
@@ -388,17 +417,21 @@ function App() {
             >
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
                 <Column title="To Do" status="todo"
-                  tasks={displayedTasks.filter(t => t.status === "todo")}
-                  deleteTask={setTaskToDelete} openModal={openModal} openHistoryModal={setHistoryTask} />
+                  tasks={searchedTasks.filter(t => t.status === "todo")}
+                  deleteTask={setTaskToDelete} openModal={openModal} openHistoryModal={setHistoryTask} 
+                  isSearching={!!searchQuery} />
                 <Column title="In Progress" status="inprogress"
-                  tasks={displayedTasks.filter(t => t.status === "inprogress")}
-                  deleteTask={setTaskToDelete} openModal={openModal} openHistoryModal={setHistoryTask} />
+                  tasks={searchedTasks.filter(t => t.status === "inprogress")}
+                  deleteTask={setTaskToDelete} openModal={openModal} openHistoryModal={setHistoryTask}
+                  isSearching={!!searchQuery} />
                 <Column title="Done" status="done"
-                  tasks={displayedTasks.filter(t => t.status === "done")}
-                  deleteTask={setTaskToDelete} openModal={openModal} openHistoryModal={setHistoryTask} />
+                  tasks={searchedTasks.filter(t => t.status === "done")}
+                  deleteTask={setTaskToDelete} openModal={openModal} openHistoryModal={setHistoryTask}
+                  isSearching={!!searchQuery} />
                 <Column title="Backlog" status="backlog"
-                  tasks={displayedTasks.filter(t => t.status === "backlog")}
-                  deleteTask={setTaskToDelete} openModal={openModal} openHistoryModal={setHistoryTask} />
+                  tasks={searchedTasks.filter(t => t.status === "backlog")}
+                  deleteTask={setTaskToDelete} openModal={openModal} openHistoryModal={setHistoryTask}
+                  isSearching={!!searchQuery} />
               </div>
 
               <DragOverlay dropAnimation={null}>
