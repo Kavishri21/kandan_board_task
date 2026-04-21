@@ -253,6 +253,33 @@ function TaskDetailsModal(props) {
     }
   };
 
+  const getCompletedTime = () => {
+    if (task.status !== "done") return null;
+
+    let startTime = new Date(task.createdAt);
+    let endTime = new Date(task.updatedAt);
+
+    if (task.statusHistory && task.statusHistory.length > 0) {
+      const todoEntry = task.statusHistory.find(h => h.status === "todo");
+      if (todoEntry) startTime = new Date(todoEntry.changedAt);
+      
+      const doneEntries = task.statusHistory.filter(h => h.status === "done");
+      if (doneEntries.length > 0) {
+          endTime = new Date(doneEntries[doneEntries.length - 1].changedAt);
+      }
+    }
+
+    const diff = endTime - startTime;
+    if (diff < 0) return "0 days 0 hrs 0 mins and 0 seconds";
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const mins = Math.floor((diff / 1000 / 60) % 60);
+    const secs = Math.floor((diff / 1000) % 60);
+
+    return `${days} days ${hours} hrs ${mins} mins and ${secs} seconds`;
+  };
+
   // Helper to render text with links and mentions
   const renderCommentText = (text) => {
     // Regex for URLs
@@ -352,7 +379,13 @@ function TaskDetailsModal(props) {
         {/* Modal Body */}
         <div className="flex-1 overflow-hidden flex flex-col bg-slate-50/30">
           {activeTab === "activity" ? (
-            <div className="p-8 overflow-y-auto">
+            <div className="px-8 pb-8 pt-5 overflow-y-auto flex flex-col gap-4">
+              {task.status === "done" && (
+                <div className="self-center text-[11px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100 flex items-center gap-2 w-max">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                  Completed time - {getCompletedTime()}
+                </div>
+              )}
               <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
                 <table className="w-full text-left text-sm">
                   <thead className="bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-500">
