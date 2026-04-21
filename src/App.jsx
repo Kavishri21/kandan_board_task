@@ -143,11 +143,12 @@ function App() {
     if (location.state?.openTaskId && tasks.length > 0) {
       const taskToOpen = tasks.find(t => t.id === location.state.openTaskId);
       if (taskToOpen) {
-         openModal(taskToOpen);
+         setHistoryTask(taskToOpen);
+         setHistoryTab("activity"); // Optionally default to activity for comments/mentions etc.
          navigate(location.pathname, { replace: true, state: {} });
       }
     }
-  }, [location.state?.openTaskId, tasks, navigate, location.pathname, openModal]);
+  }, [location.state?.openTaskId, tasks, navigate, location.pathname]);
 
   // Close filter dropdown on outside click
   useEffect(() => {
