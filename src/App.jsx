@@ -7,6 +7,7 @@ import UsersPage from "./components/UsersPage";
 import TeamsPage from "./components/TeamsPage";
 import TeamDetailPage from "./components/TeamDetailPage";
 import ReportsPage from "./components/ReportsPage";
+import NotificationsPage from "./components/NotificationsPage";
 import { useContext, useState, useEffect, useRef } from "react";
 import { Routes, Route, Navigate, useNavigate, useParams, NavLink } from "react-router-dom";
 import { createPortal } from "react-dom";
@@ -64,7 +65,7 @@ import TaskContext from "./context/TaskContext";
 import AuthContext from "./context/AuthContext";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { fetchTeams, fetchMembers } from "./services/api";
+import { fetchTeams, fetchMembers, fetchNotifications } from "./services/api";
 
 import { DndContext, TouchSensor, MouseSensor, useSensor, useSensors, DragOverlay } from "@dnd-kit/core";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
@@ -82,6 +83,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [allUsers, setAllUsers] = useState([]);
   const [historyTab, setHistoryTab] = useState("tasks");
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   // Manager / OrgAdmin filter state
   const isManager = currentUser?.globalRole === "MANAGER";
@@ -119,6 +121,18 @@ function App() {
         setFilterTeams(myTeams);
       }
     }).catch(() => {});
+    
+    // 3. Notification Polling
+    const loadUnreadCount = () => {
+      fetchNotifications().then(notifs => {
+        setUnreadNotifications(notifs.filter(n => !n.read).length);
+      }).catch(() => {});
+    };
+    
+    loadUnreadCount();
+    const interval = setInterval(loadUnreadCount, 30000); // 30s polling
+    
+    return () => clearInterval(interval);
   }, [currentUser?.id, isOrgAdmin, isManager]);
 
   // Close filter dropdown on outside click
@@ -299,6 +313,31 @@ function App() {
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
             {!isCollapsed && <span className="tracking-tight uppercase text-[10px]">Reports</span>}
           </NavLink>
+          
+          <NavLink
+            to="/notifications"
+            title="Notifications"
+            className={({ isActive }) => `flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold w-full text-left transition-all ${
+              isActive ? "bg-blue-600 text-white shadow-md shadow-blue-200" : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+            } ${isCollapsed ? 'justify-center px-0 text-center relative' : 'relative'}`}
+          >
+            <div className="relative shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+              {unreadNotifications > 0 && (
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
+              )}
+            </div>
+            {!isCollapsed && (
+              <div className="flex items-center justify-between flex-1">
+                <span className="tracking-tight uppercase text-[10px]">Alerts</span>
+                {unreadNotifications > 0 && (
+                  <span className="px-1.5 py-0.5 bg-red-500 text-white text-[9px] font-black rounded-full">
+                    {unreadNotifications}
+                  </span>
+                )}
+              </div>
+            )}
+          </NavLink>
         </div>
  
         <button 
@@ -472,6 +511,7 @@ function App() {
           <Route path="/teams" element={<TeamsPage />} />
           <Route path="/teams/:teamId" element={<TeamDetailPageWrapper allTeams={filterTeams} />} />
           <Route path="/reports" element={<ReportsPage currentUser={currentUser} />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
           
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

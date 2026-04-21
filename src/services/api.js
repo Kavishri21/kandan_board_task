@@ -313,3 +313,35 @@ export async function deleteTeam(teamId) {
 }
 
 // DEPRECATED API - removed moveMemberToTeam since member architecture supports multi-teams
+
+// --- Notification APIs ---
+
+export async function fetchNotifications() {
+  const response = await fetch(`${BASE_URL}/notifications`, {
+    method: "GET",
+    headers: getHeaders(),
+  });
+  const res = await handleResponse(response, "Failed to fetch notifications");
+  if (!res) return [];
+  return res.json();
+}
+
+export async function markNotificationAsRead(id) {
+  const response = await fetch(`${BASE_URL}/notifications/${id}/read`, {
+    method: "PUT",
+    headers: getHeaders(),
+  });
+  const res = await handleResponse(response, "Failed to mark notification as read");
+  if (!res) return null;
+  return res.json();
+}
+
+export async function markAllNotificationsAsRead() {
+  const response = await fetch(`${BASE_URL}/notifications/read-all`, {
+    method: "PUT",
+    headers: getHeaders(),
+  });
+  const res = await handleResponse(response, "Failed to mark all notifications as read");
+  if (!res) return null;
+  return res.json();
+}
