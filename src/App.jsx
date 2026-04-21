@@ -9,7 +9,7 @@ import TeamDetailPage from "./components/TeamDetailPage";
 import ReportsPage from "./components/ReportsPage";
 import NotificationsPage from "./components/NotificationsPage";
 import { useContext, useState, useEffect, useRef } from "react";
-import { Routes, Route, Navigate, useNavigate, useParams, NavLink } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate, useParams, NavLink, useLocation } from "react-router-dom";
 import { createPortal } from "react-dom";
 
 // --- Sub-component: Delete Task Confirmation Modal ---
@@ -93,6 +93,9 @@ function App() {
   const [activeFilter, setActiveFilter] = useState(canFilter ? { type: "myself" } : null);   // null = personal board
   const [filterOpen, setFilterOpen] = useState(false);
   const filterRef = useRef(null);
+  
+  const location = useLocation();
+  const navigate = useNavigate();
 
   // Load data for board filters and mentions
   useEffect(() => {
@@ -134,6 +137,17 @@ function App() {
     
     return () => clearInterval(interval);
   }, [currentUser?.id, isOrgAdmin, isManager]);
+
+  // Handle opening task modal from notification route state
+  useEffect(() => {
+    if (location.state?.openTaskId && tasks.length > 0) {
+      const taskToOpen = tasks.find(t => t.id === location.state.openTaskId);
+      if (taskToOpen) {
+         openModal(taskToOpen);
+         navigate(location.pathname, { replace: true, state: {} });
+      }
+    }
+  }, [location.state?.openTaskId, tasks, navigate, location.pathname, openModal]);
 
   // Close filter dropdown on outside click
   useEffect(() => {

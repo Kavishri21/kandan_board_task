@@ -345,3 +345,20 @@ export async function markAllNotificationsAsRead() {
   if (!res) return null;
   return res.json();
 }
+
+export async function deleteNotification(id) {
+  const response = await fetch(`${BASE_URL}/notifications/${id}`, {
+    method: "DELETE",
+    headers: getHeaders(),
+  });
+  await handleResponse(response, "Failed to delete notification");
+}
+
+export async function clearAllNotifications() {
+  const response = await fetch(`${BASE_URL}/notifications/clear-all`, {
+    method: "DELETE",
+    headers: getHeaders(),
+  });
+  await handleResponse(response, "Failed to clear all notifications");
+}
+

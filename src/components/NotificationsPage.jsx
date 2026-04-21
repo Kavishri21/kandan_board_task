@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { fetchNotifications, markNotificationAsRead, markAllNotificationsAsRead } from "../services/api";
+import { fetchNotifications, markNotificationAsRead, markAllNotificationsAsRead, deleteNotification, clearAllNotifications } from "../services/api";
 import { toast } from "react-toastify";
 
 function NotificationIcon({ type }) {
@@ -31,9 +31,12 @@ function NotificationIcon({ type }) {
   );
 }
 
+import { useNavigate } from "react-router-dom";
+
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadNotifications();
@@ -70,6 +73,39 @@ export default function NotificationsPage() {
     }
   }
 
+  async function handleDelete(e, id) {
+    e.stopPropagation();
+    try {
+      await deleteNotification(id);
+      setNotifications(prev => prev.filter(n => n.id !== id));
+      toast.success("Notification deleted");
+    } catch (err) {
+      toast.error("Failed to delete notification");
+    }
+  }
+
+  async function handleClearAll() {
+    try {
+      await clearAllNotifications();
+      setNotifications([]);
+      toast.success("All notifications cleared");
+    } catch (err) {
+      toast.error("Failed to clear notifications");
+    }
+  }
+
+  const handleNotificationClick = (notif) => {
+    if (!notif.read) {
+        handleMarkAsRead(notif.id);
+    }
+    
+    if (notif.type === 'TEAM_ADDED') {
+        navigate(`/teams/${notif.relatedId}`);
+    } else {
+        navigate('/', { state: { openTaskId: notif.relatedId } });
+    }
+  };
+
   const formatTime = (isoString) => {
     const date = new Date(isoString);
     const now = new Date();
@@ -100,14 +136,24 @@ export default function NotificationsPage() {
           </h1>
           <p className="text-slate-500 text-sm mt-1 font-medium">Stay updated on your tasks and team activities.</p>
         </div>
-        {unreadCount > 0 && (
-          <button 
-            onClick={handleMarkAllAsRead}
-            className="text-sm font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-xl transition-colors"
-          >
-            Mark all as read
-          </button>
-        )}
+        <div className="flex gap-2">
+          {unreadCount > 0 && (
+            <button 
+              onClick={handleMarkAllAsRead}
+              className="text-sm font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-xl transition-colors"
+            >
+              Mark all as read
+            </button>
+          )}
+          {notifications.length > 0 && (
+            <button 
+              onClick={handleClearAll}
+              className="text-sm font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-4 py-2 rounded-xl transition-colors"
+            >
+              Clear all
+            </button>
+          )}
+        </div>
       </header>
 
       <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
@@ -127,8 +173,9 @@ export default function NotificationsPage() {
           <div className="divide-y divide-slate-100 flex flex-col">
             {notifications.map(notif => (
               <div 
-                key={notif.id} 
-                className={`p-5 flex gap-4 transition-colors relative group ${!notif.read ? 'bg-blue-50/30 hover:bg-blue-50/60' : 'hover:bg-slate-50'}`}
+                key={notif.id}
+                onClick={() => handleNotificationClick(notif)}
+                className={`p-5 flex gap-4 transition-colors relative group cursor-pointer ${!notif.read ? 'bg-blue-50/30 hover:bg-blue-50/60' : 'hover:bg-slate-50'}`}
               >
                 {!notif.read && (
                   <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 rounded-r-full"></div>
@@ -148,13 +195,20 @@ export default function NotificationsPage() {
                 <div className="shrink-0 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   {!notif.read && (
                     <button 
-                      onClick={() => handleMarkAsRead(notif.id)}
-                      className="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 shadow-sm"
+                      onClick={(e) => { e.stopPropagation(); handleMarkAsRead(notif.id); }}
+                      className="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 shadow-sm transition-all hover:scale-105"
                       title="Mark as read"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                     </button>
                   )}
+                  <button 
+                    onClick={(e) => handleDelete(e, notif.id)}
+                    className="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-slate-200 text-slate-400 hover:text-red-600 hover:border-red-200 shadow-sm transition-all hover:scale-105"
+                    title="Delete notification"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                  </button>
                 </div>
               </div>
             ))}
