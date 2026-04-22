@@ -1,75 +1,40 @@
-import TaskCard from "./components/TaskCard";
-import AddTaskForm from "./components/AddTaskForm";
-import TaskModal from "./components/TaskModal";
-import BacklogModal from "./components/BacklogModal";
-import TaskDetailsModal from "./components/TaskDetailsModal";
+// ---- React & Router ----
+import { useContext, useState, useEffect, useRef } from "react";
+import { Routes, Route, Navigate, useNavigate, useParams, useLocation } from "react-router-dom";
+
+// ---- Context ----
+import TaskContext from "./context/TaskContext";
+import AuthContext from "./context/AuthContext";
+
+// ---- Third-party ----
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { DndContext, TouchSensor, MouseSensor, useSensor, useSensors, DragOverlay } from "@dnd-kit/core";
+import { restrictToWindowEdges } from "@dnd-kit/modifiers";
+
+// ---- Services ----
+import { fetchTeams, fetchMembers, fetchNotifications } from "./services/api";
+
+// ---- Page Components ----
 import UsersPage from "./components/UsersPage";
 import TeamsPage from "./components/TeamsPage";
 import TeamDetailPage from "./components/TeamDetailPage";
 import ReportsPage from "./components/ReportsPage";
 import NotificationsPage from "./components/NotificationsPage";
-import { useContext, useState, useEffect, useRef } from "react";
-import { Routes, Route, Navigate, useNavigate, useParams, NavLink, useLocation } from "react-router-dom";
-import { createPortal } from "react-dom";
 
-// --- Sub-component: Delete Task Confirmation Modal ---
-function DeleteTaskModal({ isOpen, onClose, task, onConfirm }) {
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  if (!isOpen || !task) return null;
-
-  async function handleConfirm() {
-    setIsDeleting(true);
-    await onConfirm(task.id);
-    setIsDeleting(false);
-    onClose();
-  }
-
-  return createPortal(
-    <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex justify-center items-center z-[110] p-4 text-left">
-      <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm border border-slate-200 text-center">
-        <div className="w-14 h-14 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4 mx-auto">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="3 6 5 6 21 6"></polyline>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-            <line x1="10" y1="11" x2="10" y2="17"></line>
-            <line x1="14" y1="11" x2="14" y2="17"></line>
-          </svg>
-        </div>
-        <h3 className="text-lg font-bold text-slate-800 mb-2">Delete Task?</h3>
-        <p className="text-slate-500 text-sm mb-6">
-          Are you sure you want to delete <span className="font-bold text-slate-700">{task.title}</span>? This action cannot be undone.
-        </p>
-        <div className="flex gap-3">
-          <button 
-            onClick={onClose} 
-            className="flex-1 py-2 rounded-lg font-bold text-slate-500 hover:bg-slate-50 transition-colors"
-          >
-            Cancel
-          </button>
-          <button 
-            onClick={handleConfirm} 
-            disabled={isDeleting} 
-            className="flex-1 py-2 bg-red-500 text-white rounded-lg font-bold hover:bg-red-600 transition-all shadow-md active:scale-95 disabled:opacity-50"
-          >
-            {isDeleting ? "Deleting..." : "Delete"}
-          </button>
-        </div>
-      </div>
-    </div>,
-    document.body
-  );
-}
-
-import TaskContext from "./context/TaskContext";
-import AuthContext from "./context/AuthContext";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { fetchTeams, fetchMembers, fetchNotifications } from "./services/api";
-
-import { DndContext, TouchSensor, MouseSensor, useSensor, useSensors, DragOverlay } from "@dnd-kit/core";
-import { restrictToWindowEdges } from "@dnd-kit/modifiers";
+// ---- Board UI Components ----
+import AddTaskForm from "./components/AddTaskForm";
 import Column from "./components/Column";
+import TaskCard from "./components/TaskCard";
+import Sidebar from "./components/Sidebar";
+
+// ---- Modal Components ----
+import TaskModal from "./components/TaskModal";
+import BacklogModal from "./components/BacklogModal";
+import TaskDetailsModal from "./components/TaskDetailsModal";
+import DeleteTaskModal from "./components/DeleteTaskModal";
+import LogoutConfirmModal from "./components/LogoutConfirmModal";
+
 
 function App() {
   const { tasks, addTask, deleteTask, openModal, selectedTask, updateTask, updateTaskStatus, closeModal, loading, error, loadTasks } = useContext(TaskContext);
@@ -84,6 +49,7 @@ function App() {
   const [allUsers, setAllUsers] = useState([]);
   const [historyTab, setHistoryTab] = useState("tasks");
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   // Manager / OrgAdmin filter state
   const isManager = currentUser?.globalRole === "MANAGER";
@@ -418,106 +384,12 @@ function App() {
     <div className="flex h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-100 overflow-x-hidden w-full">
       
       {/* Collapsible Sidebar */}
-      <aside className={`bg-white border-r border-slate-200 flex flex-col pt-8 pb-6 shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-20 shrink-0 hidden md:flex transition-all duration-300 relative ${isCollapsed ? 'w-20 px-3' : 'w-64 px-4'}`}>
-        
-        {/* Toggle Button */}
-        <button 
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute -right-3 top-10 w-6 h-6 bg-white border border-slate-200 rounded-full flex items-center justify-center shadow-sm hover:border-blue-400 hover:text-blue-500 transition-all z-30"
-          title={isCollapsed ? "Expand" : "Collapse"}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`}><polyline points="15 18 9 12 15 6"></polyline></svg>
-        </button>
-
-        <div className={`mb-8 transition-all ${isCollapsed ? 'px-1' : 'px-3'}`}>
-          <div className="flex items-center gap-3 text-blue-700 font-bold text-lg tracking-tight overflow-hidden whitespace-nowrap">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
-            {!isCollapsed && <span>Kanban Board</span>}
-          </div>
-        </div>
-
-        <div className="flex-1 flex flex-col gap-2">
-          <NavLink
-            to="/"
-            title="Dashboard"
-            className={({ isActive }) => `flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold w-full text-left transition-all ${
-              isActive ? "bg-blue-600 text-white shadow-md shadow-blue-200" : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
-            } ${isCollapsed ? 'justify-center px-0 text-center' : ''}`}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-            {!isCollapsed && <span className="tracking-tight uppercase text-[10px]">Dashboard</span>}
-          </NavLink>
-
-          <NavLink
-            to="/users"
-            title="Users"
-            className={({ isActive }) => `flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold w-full text-left transition-all ${
-              isActive ? "bg-blue-600 text-white shadow-md shadow-blue-200" : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
-            } ${isCollapsed ? 'justify-center px-0 text-center' : ''}`}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-            {!isCollapsed && <span className="tracking-tight uppercase text-[10px]">Users</span>}
-          </NavLink>
-
-          <NavLink
-            to="/teams"
-            title="Teams"
-            className={({ isActive }) => `flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold w-full text-left transition-all ${
-              isActive ? "bg-blue-600 text-white shadow-md shadow-blue-200" : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
-            } ${isCollapsed ? 'justify-center px-0 text-center' : ''}`}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-            {!isCollapsed && <span className="tracking-tight uppercase text-[10px]">Teams</span>}
-          </NavLink>
-
-          <NavLink
-            to="/reports"
-            title="Reports"
-            className={({ isActive }) => `flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold w-full text-left transition-all ${
-              isActive ? "bg-blue-600 text-white shadow-md shadow-blue-200" : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
-            } ${isCollapsed ? 'justify-center px-0 text-center' : ''}`}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-            {!isCollapsed && <span className="tracking-tight uppercase text-[10px]">Reports</span>}
-          </NavLink>
-          
-          <NavLink
-            to="/notifications"
-            title="Notifications"
-            className={({ isActive }) => `flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold w-full text-left transition-all ${
-              isActive ? "bg-blue-600 text-white shadow-md shadow-blue-200" : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
-            } ${isCollapsed ? 'justify-center px-0 text-center relative' : 'relative'}`}
-          >
-            <div className="relative shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
-              {unreadNotifications > 0 && (
-                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
-              )}
-            </div>
-            {!isCollapsed && (
-              <div className="flex items-center justify-between flex-1">
-                <span className="tracking-tight uppercase text-[10px]">Alerts</span>
-                {unreadNotifications > 0 && (
-                  <span className="px-1.5 py-0.5 bg-red-500 text-white text-[9px] font-black rounded-full">
-                    {unreadNotifications}
-                  </span>
-                )}
-              </div>
-            )}
-          </NavLink>
-        </div>
- 
-        <button 
-          onClick={logout} 
-          title="Logout"
-          className={`mt-auto flex items-center gap-3 px-3 py-2.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-xl font-medium transition-colors w-full text-left overflow-hidden whitespace-nowrap ${
-            isCollapsed ? 'justify-center px-0 text-center' : ''
-          }`}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-          {!isCollapsed && <span>Logout</span>}
-        </button>
-      </aside>
+      <Sidebar
+        isCollapsed={isCollapsed}
+        setIsCollapsed={setIsCollapsed}
+        unreadNotifications={unreadNotifications}
+        onLogoutClick={() => setIsLogoutModalOpen(true)}
+      />
 
       {/* Main Kanban Content Area */}
       <main className="flex-1 overflow-x-hidden overflow-y-auto px-4 sm:px-8 xl:px-12 py-8 relative z-10 focus:outline-none">
@@ -528,8 +400,9 @@ function App() {
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
             Kanban
           </div>
-          <button onClick={logout} className="text-sm font-bold text-slate-500 p-2">Logout</button>
+          <button onClick={() => setIsLogoutModalOpen(true)} className="text-sm font-bold text-slate-500 p-2">Logout</button>
         </div>
+
 
         <Routes>
           <Route path="/" element={
@@ -731,6 +604,12 @@ function App() {
           onConfirm={deleteTask}
         />
       )}
+
+      <LogoutConfirmModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={logout}
+      />
       
     </div>
     
