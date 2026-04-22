@@ -73,9 +73,10 @@ export async function registerUser(userData) {
 
 
 
-export async function fetchTasks(teamId, createdByMe = false) {
+export async function fetchTasks(teamId, targetUserId = null, createdByMe = false) {
   const params = new URLSearchParams();
   if (teamId) params.set("teamId", teamId);
+  if (targetUserId) params.set("targetUserId", targetUserId);
   if (createdByMe) params.set("createdByMe", "true");
   const query = params.toString() ? `?${params.toString()}` : "";
   const url = `${BASE_URL}/tasks${query}`;

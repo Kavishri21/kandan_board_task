@@ -56,9 +56,13 @@ function App() {
   const isOrgAdmin = currentUser?.globalRole === "ORG_ADMIN";
   const canFilter = isManager || isOrgAdmin;
   const [filterTeams, setFilterTeams] = useState([]);       // teams to show in dropdown
-  const [activeFilter, setActiveFilter] = useState(canFilter ? { type: "myself" } : null);   // null = personal board
+  const [activeFilter, setActiveFilter] = useState(null);   // null = personal board
   const [filterOpen, setFilterOpen] = useState(false);
   const filterRef = useRef(null);
+  
+  // Member drill-down states
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [memberViewToggle, setMemberViewToggle] = useState("team"); // "team" or "personal"
   
   const location = useLocation();
   const navigate = useNavigate();
@@ -128,27 +132,25 @@ function App() {
   function handleFilterSelect(filter) {
     setActiveFilter(filter);
     setFilterOpen(false);
+    setSelectedMember(null); // Reset member drill-down
+    setMemberViewToggle("team");
+
     if (!filter) {
       // Personal board
       loadTasks();
-    } else if (filter.type === "myself") {
-      // Only tasks assigned to me (no teamId, client-side filtered)
-      loadTasks(null, false);
     } else if (filter.type === "team") {
-      if (isOrgAdmin) {
-        // ORG_ADMIN: all tasks in that team
-        loadTasks(filter.teamId, false);
-      } else {
-        // MANAGER: only tasks they created for that team
-        loadTasks(filter.teamId, true);
-      }
+      // Fetch ALL tasks in the team
+      loadTasks(filter.teamId);
     }
   }
 
-  // If filter is "myself", filter client-side to just my tasks
-   const displayedTasks = (activeFilter?.type === "myself")
-    ? tasks.filter(t => t.userId === currentUser?.id)
-    : tasks;
+  // Filter logic based on active filter and selected member
+  let displayedTasks = tasks;
+  if (!activeFilter) {
+    displayedTasks = tasks.filter(t => t.userId === currentUser?.id);
+  } else if (activeFilter?.type === "team" && selectedMember && memberViewToggle === "team") {
+    displayedTasks = tasks.filter(t => t.userId === selectedMember.id);
+  }
 
   // Search Filter
   const searchedTasks = displayedTasks.filter(t => {
@@ -158,19 +160,25 @@ function App() {
   });
 
   // Board header label
-  const boardLabel = !activeFilter
-    ? "My Board"
-    : activeFilter.type === "myself"
-    ? "My Tasks"
-    : `Team: ${activeFilter.teamName}`;
-  
-  const boardSubLabel = !activeFilter
-    ? "Your personal task view across all teams."
-    : activeFilter.type === "myself"
-    ? "Tasks assigned to you."
-    : isOrgAdmin
-    ? `All tasks in ${activeFilter.teamName}.`
-    : `Tasks you delegated to ${activeFilter.teamName}.`;
+  let boardLabel = "My Tasks";
+  if (activeFilter?.type === "team") {
+    if (selectedMember) {
+      boardLabel = `${selectedMember.name}'s Workload`;
+    } else {
+      boardLabel = `Team: ${activeFilter.teamName}`;
+    }
+  }
+
+  let boardSubLabel = "Tasks assigned to you.";
+  if (activeFilter?.type === "team") {
+    if (selectedMember) {
+      boardSubLabel = memberViewToggle === "team" 
+        ? `Tasks assigned within ${activeFilter.teamName}.`
+        : `Personal tasks not assigned to any team.`;
+    } else {
+      boardSubLabel = `All tasks in ${activeFilter.teamName}.`;
+    }
+  }
 
 
 
@@ -449,7 +457,7 @@ function App() {
                         }`}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
-                        {activeFilter ? (activeFilter.type === "myself" ? "Myself" : activeFilter.teamName) : "Filter View"}
+                        {activeFilter ? activeFilter.teamName : "My Board (Personal)"}
                         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                       </button>
 
@@ -463,16 +471,6 @@ function App() {
                             }`}
                           >
                             My Board (Personal)
-                          </button>
-
-                          {/* Myself option */}
-                          <button
-                            onClick={() => handleFilterSelect({ type: "myself" })}
-                            className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${
-                              activeFilter?.type === "myself" ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
-                            }`}
-                          >
-                            Myself
                           </button>
 
                           {filterTeams.length > 0 && (
@@ -496,10 +494,87 @@ function App() {
                       )}
                     </div>
                   )}
-
+                  
                   <AddTaskForm addTask={addTask} />
                 </div>
               </header>
+
+              {/* Members Filter (Only shows when a Team is selected) */}
+              {activeFilter?.type === "team" && (
+                <div className="mb-8">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-sm font-bold text-slate-400 uppercase tracking-wider">Team Members</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {(() => {
+                      const activeTeam = filterTeams.find(t => t.id === activeFilter.teamId);
+                      if (!activeTeam) return null;
+                      return activeTeam.members.map(m => {
+                        const userObj = allUsers.find(u => u.id === m.userId);
+                        const name = userObj ? userObj.name : m.userEmail;
+                        const isSelected = selectedMember?.id === m.userId;
+                        return (
+                          <button
+                            key={m.userId}
+                            onClick={() => {
+                              if (isSelected) {
+                                 // Deselect
+                                 setSelectedMember(null);
+                                 setMemberViewToggle("team");
+                                 loadTasks(activeFilter.teamId); // Load full team tasks
+                              } else {
+                                 // Select
+                                 setSelectedMember({ id: m.userId, name: name });
+                                 setMemberViewToggle("team");
+                                 // Client side filter handled by displayedTasks, but ensure we have team tasks
+                                 loadTasks(activeFilter.teamId); 
+                              }
+                            }}
+                            className={`px-4 py-2 rounded-xl text-sm font-medium border transition-colors ${
+                              isSelected ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-200" : "bg-white text-slate-700 border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${isSelected ? 'bg-white/20' : 'bg-slate-100 text-slate-500'}`}>
+                                {name.charAt(0).toUpperCase()}
+                              </div>
+                              {name} {m.userId === currentUser?.id ? "(Me)" : ""}
+                            </div>
+                          </button>
+                        );
+                      });
+                    })()}
+                  </div>
+                  
+                  {/* Member Tasks Toggle (Team vs Personal) */}
+                  {selectedMember && selectedMember.id !== currentUser?.id && (
+                    <div className="mt-5 flex gap-2 p-1 bg-slate-200/50 rounded-xl w-max">
+                        <button
+                          onClick={() => {
+                              setMemberViewToggle("team");
+                              loadTasks(activeFilter.teamId); // Load team tasks
+                          }}
+                          className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
+                            memberViewToggle === "team" ? "bg-white text-indigo-700 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                          }`}
+                        >
+                          Team Tasks
+                        </button>
+                        <button
+                          onClick={() => {
+                              setMemberViewToggle("personal");
+                              loadTasks(null, selectedMember.id, false); // Load personal tasks of selected member
+                          }}
+                          className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
+                            memberViewToggle === "personal" ? "bg-white text-indigo-700 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                          }`}
+                        >
+                          Personal Tasks
+                        </button>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <DndContext 
                 sensors={sensors} 

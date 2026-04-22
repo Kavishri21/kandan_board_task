@@ -21,16 +21,16 @@ function TaskProvider(props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const lastFetchParamsRef = useRef({ teamId: undefined, createdByMe: false });
+  const lastFetchParamsRef = useRef({ teamId: undefined, targetUserId: undefined, createdByMe: false });
 
   // ----------------------------------------------------------------
   // Load tasks — accepts optional filter params
   // ----------------------------------------------------------------
-  function loadTasks(teamId, createdByMe = false) {
+  function loadTasks(teamId, targetUserId = null, createdByMe = false) {
     // Remember these params so the polling interval re-uses them
-    lastFetchParamsRef.current = { teamId, createdByMe };
+    lastFetchParamsRef.current = { teamId, targetUserId, createdByMe };
     setLoading(true);
-    fetchTasks(teamId, createdByMe)
+    fetchTasks(teamId, targetUserId, createdByMe)
       .then(function (data) {
         setTasks(data);
         setLoading(false);
@@ -47,12 +47,12 @@ function TaskProvider(props) {
     loadTasks();
 
     // ---- POLLING ----
-    // Every 15 seconds, silently re-fetch using the same params
+    // Every 5 seconds, silently re-fetch using the same params
     // that were last used (respects active manager filter).
     // No loading spinner shown — board updates quietly in background.
     const interval = setInterval(function () {
-      const { teamId, createdByMe } = lastFetchParamsRef.current;
-      fetchTasks(teamId, createdByMe)
+      const { teamId, targetUserId, createdByMe } = lastFetchParamsRef.current;
+      fetchTasks(teamId, targetUserId, createdByMe)
         .then(function (data) { setTasks(data); })
         .catch(function (err) { console.error("Background poll error:", err); });
     }, 5000); // 5 seconds
