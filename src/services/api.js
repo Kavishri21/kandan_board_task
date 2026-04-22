@@ -99,11 +99,15 @@ export async function createTask(task) {
   return res.json();
 }
 
-export async function updateTaskStatus(id, newStatus) {
+export async function updateTaskStatus(id, newStatus, position = null) {
+  const body = { status: newStatus };
+  if (position !== null) {
+    body.position = position;
+  }
   const response = await fetch(`${BASE_URL}/tasks/${id}/status`, {
     method: "PATCH",
     headers: getHeaders(),
-    body: JSON.stringify({ status: newStatus }),
+    body: JSON.stringify(body),
   });
   const res = await handleResponse(response, "Failed to update task status");
   if (!res) return null;

@@ -133,20 +133,24 @@ function TaskProvider(props) {
   // This is the main Phase 1 feature:
   //   Backend records new status + timestamp + statusHistory entry
   // ----------------------------------------------------------------
-  function updateTaskStatus(taskId, newStatus) {
+  function updateTaskStatus(taskId, newStatus, newPosition = null) {
     // Optimistic update — update UI immediately, sync with backend
     setTasks(function (prev) {
       return prev.map(function (task) {
         if (task.id === taskId) {
-          return { ...task, status: newStatus };
+          const updatedTask = { ...task, status: newStatus };
+          if (newPosition !== null) {
+            updatedTask.position = newPosition;
+          }
+          return updatedTask;
         }
         return task;
       });
     });
 
-    return apiUpdateTaskStatus(taskId, newStatus)
+    return apiUpdateTaskStatus(taskId, newStatus, newPosition)
       .then(function (savedTask) {
-        // Sync with what the backend actually saved (includes updatedAt)
+        // Sync with what the backend actually saved (includes updatedAt and position)
         setTasks(function (prev) {
           return prev.map(function (task) {
             if (task.id === savedTask.id) {
@@ -159,7 +163,8 @@ function TaskProvider(props) {
       .catch(function (err) {
         console.error("Failed to update task status:", err);
         // Rollback: re-fetch the board from backend on failure
-        fetchTasks().then(setTasks);
+        const { teamId, createdByMe } = lastFetchParamsRef.current;
+        fetchTasks(teamId, createdByMe).then(setTasks);
       });
   }
 

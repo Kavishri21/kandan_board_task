@@ -133,7 +133,7 @@ function App() {
     };
     
     loadUnreadCount();
-    const interval = setInterval(loadUnreadCount, 30000); // 30s polling
+    const interval = setInterval(loadUnreadCount, 3000); // 3s polling
     
     return () => clearInterval(interval);
   }, [currentUser?.id, isOrgAdmin, isManager]);
@@ -144,7 +144,7 @@ function App() {
       const taskToOpen = tasks.find(t => t.id === location.state.openTaskId);
       if (taskToOpen) {
          setHistoryTask(taskToOpen);
-         setHistoryTab("activity"); // Optionally default to activity for comments/mentions etc.
+         setHistoryTab("tasks"); 
          navigate(location.pathname, { replace: true, state: {} });
       }
     }
@@ -227,16 +227,168 @@ function App() {
 
     if (!over) return;
 
-    const taskId = active.id;
-    const newStatus = over.id;
+    const activeId = active.id;
+    const overId = over.id;
 
-    const draggedTask = tasks.find(function(t) { return t.id === taskId; });
-    if (!draggedTask || draggedTask.status === newStatus) return;
+    const activeTask = tasks.find(t => t.id === activeId);
+    if (!activeTask) return;
 
-    if (newStatus === "backlog") {
-      setPendingBacklogTask(draggedTask);
+    // 1. Identify destination status
+    let newStatus = activeTask.status;
+    const overTask = tasks.find(t => t.id === overId);
+    
+    if (["todo", "inprogress", "done", "backlog"].includes(overId)) {
+      newStatus = overId;
+    } else if (overTask) {
+      newStatus = overTask.status;
+    }
+
+    // 2. Handle Priority Constraint and Reordering
+    const priorityOrder = { high: 1, medium: 2, low: 3 };
+    const activePriority = activeTask.priority?.toLowerCase() || "medium";
+    
+    // Get all tasks in the destination column, sorted by priority and position
+    const colTasks = tasks
+      .filter(t => t.status === newStatus && t.id !== activeId)
+      .sort((a, b) => {
+        const pA = priorityOrder[a.priority?.toLowerCase()] || 4;
+        const pB = priorityOrder[b.priority?.toLowerCase()] || 4;
+        if (pA !== pB) return pA - pB;
+        return (a.position || 0) - (b.position || 0);
+      });
+
+    // Find the specific priority group boundaries in the destination column
+    const groupTasks = colTasks.filter(t => (t.priority?.toLowerCase() || "medium") === activePriority);
+
+    let newPosition = activeTask.position;
+
+    if (overTask && overTask.id !== activeId) {
+      const overPriority = overTask.priority?.toLowerCase() || "medium";
+      
+      if (overPriority === activePriority) {
+        // Drop over same priority: Calculate mid-point
+        const overIndex = groupTasks.findIndex(t => t.id === overId);
+        
+        // Vertical check: are we above or below? 
+        // dnd-kit sortable handleDragEnd usually assumes a swap or insertion.
+        // We'll calculate based on the index in the sorted list.
+        const allColTasks = tasks
+          .filter(t => t.status === newStatus)
+          .sort((a, b) => {
+            const pA = priorityOrder[a.priority?.toLowerCase()] || 4;
+            const pB = priorityOrder[b.priority?.toLowerCase()] || 4;
+            if (pA !== pB) return pA - pB;
+            return (a.position || 0) - (b.position || 0);
+          });
+        
+        const oldIndex = allColTasks.findIndex(t => t.id === activeId);
+        const targetIndex = allColTasks.findIndex(t => t.id === overId);
+        
+        if (oldIndex !== targetIndex) {
+          const newIndex = targetIndex;
+          const prevTask = allColTasks[newIndex > targetIndex ? newIndex - 1 : newIndex - 1]; // This is getting complex
+          // Simpler: just use arrayMove logic on groupTasks
+        }
+      } else {
+        // Drop over different priority: Snap to boundary
+        // If dragged above a higher priority task -> place at TOP of its own priority group
+        // If dragged below a lower priority task -> place at BOTTOM of its own priority group
+        const activeP = priorityOrder[activePriority] || 4;
+        const overP = priorityOrder[overPriority] || 4;
+        
+        if (activeP > overP) {
+          // I am lower priority than what I'm over (e.g. Medium over High)
+          // Place at TOP of Medium group
+          newPosition = groupTasks.length > 0 ? groupTasks[0].position - 1000 : activeTask.position;
+        } else {
+          // I am higher priority than what I'm over (e.g. High over Medium)
+          // Place at BOTTOM of High group
+          newPosition = groupTasks.length > 0 ? groupTasks[groupTasks.length - 1].position + 1000 : activeTask.position;
+        }
+      }
+    }
+
+    const isTaskOverdue = (task, status) => {
+      if (status === "done") return false;
+      if (!task.dueDate) return false;
+      const targetDate = new Date(task.dueDate);
+      const targetUTC = Date.UTC(targetDate.getUTCFullYear(), targetDate.getUTCMonth(), targetDate.getUTCDate());
+      const now = new Date();
+      const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+      return (targetUTC - todayUTC) <= 0;
+    };
+
+    // --- Refined Position Logic ---
+    const currentColumnTasks = tasks
+      .filter(t => t.status === newStatus || t.id === activeId)
+      .sort((a, b) => {
+        const aOverdue = isTaskOverdue(a, newStatus);
+        const bOverdue = isTaskOverdue(b, newStatus);
+        if (aOverdue && !bOverdue) return -1;
+        if (!aOverdue && bOverdue) return 1;
+
+        const pA = priorityOrder[a.priority?.toLowerCase()] || 4;
+        const pB = priorityOrder[b.priority?.toLowerCase()] || 4;
+        if (pA !== pB) return pA - pB;
+        return (a.position || 0) - (b.position || 0);
+      });
+
+    const activeIsOverdue = isTaskOverdue(activeTask, newStatus);
+    const oldIdx = currentColumnTasks.findIndex(t => t.id === activeId);
+    let newIdx = currentColumnTasks.findIndex(t => t.id === overId);
+    if (newIdx === -1) newIdx = currentColumnTasks.length - 1;
+
+    // 3. Enforce Boundaries: Find the valid range for the active task
+    let firstValidIdx, lastValidIdx;
+
+    if (activeIsOverdue) {
+      // Must stay in overdue section
+      firstValidIdx = 0;
+      lastValidIdx = currentColumnTasks.findLastIndex(t => isTaskOverdue(t, newStatus));
     } else {
-      updateTaskStatus(taskId, newStatus);
+      // Must stay in its priority group within the non-overdue section
+      firstValidIdx = currentColumnTasks.findIndex(t => 
+        !isTaskOverdue(t, newStatus) && 
+        (t.priority?.toLowerCase() || "medium") === activePriority
+      );
+      lastValidIdx = currentColumnTasks.findLastIndex(t => 
+        !isTaskOverdue(t, newStatus) && 
+        (t.priority?.toLowerCase() || "medium") === activePriority
+      );
+    }
+
+    // Clamp newIdx
+    if (newIdx < firstValidIdx) newIdx = firstValidIdx;
+    if (newIdx > lastValidIdx) newIdx = lastValidIdx;
+
+    if (oldIdx !== newIdx || newStatus !== activeTask.status) {
+      // Calculate new position
+      if (currentColumnTasks.length === 1 && newStatus !== activeTask.status) {
+         newPosition = Number(Date.now()); // Empty column case
+      } else {
+        const neighbors = [...currentColumnTasks.filter(t => t.id !== activeId)];
+        neighbors.splice(newIdx, 0, activeTask); // Mock the move
+        
+        const idx = newIdx;
+        const prev = neighbors[idx - 1];
+        const next = neighbors[idx + 1];
+
+        if (!prev && !next) {
+          newPosition = Number(Date.now());
+        } else if (!prev) {
+          newPosition = next.position - 1000;
+        } else if (!next) {
+          newPosition = prev.position + 1000;
+        } else {
+          newPosition = (prev.position + next.position) / 2;
+        }
+      }
+
+      if (newStatus === "backlog" && activeTask.status !== "backlog") {
+        setPendingBacklogTask({ ...activeTask, position: newPosition });
+      } else {
+        updateTaskStatus(activeId, newStatus, newPosition);
+      }
     }
   }
 
@@ -546,7 +698,7 @@ function App() {
           closeModal={function() { setPendingBacklogTask(null); }}
           onSave={function(updatedTaskProps) {
             updateTask(updatedTaskProps).then(() => {
-              updateTaskStatus(updatedTaskProps.id, "backlog");
+              updateTaskStatus(updatedTaskProps.id, "backlog", pendingBacklogTask.position);
               setPendingBacklogTask(null);
             });
           }}

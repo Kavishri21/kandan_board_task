@@ -1,13 +1,34 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useDraggable } from "@dnd-kit/core";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 function TaskCard(props) {
   const [isExpanded, setIsExpanded] = useState(false);
   const task = props.task;
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({id: task.id});
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: task.id,
+    data: {
+      type: 'Task',
+      task
+    }
+  });
+  
   const isOverlay = props.isOverlay;
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+    zIndex: isDragging ? 100 : undefined,
+    opacity: isDragging && !isOverlay ? 0.3 : 1,
+  };
+
+  if (isOverlay) {
+    style.transform = (style.transform || "") + " rotate(2deg)";
+    style.cursor = "grabbing";
+    style.opacity = 1;
+  }
 
   // Close menu on outside click
   useEffect(() => {
@@ -25,16 +46,6 @@ function TaskCard(props) {
     if (isDragging) setMenuOpen(false);
   }, [isDragging]);
 
-  const style = (transform && !isOverlay)
-  ? {
-      transform: "translate(" + transform.x + "px, " + transform.y + "px)",
-      zIndex: 50,
-      position: "relative"
-    }
-  : isOverlay 
-  ? { transform: "rotate(2deg)", cursor: "grabbing" } 
-  : undefined;
-
   return (
     <div
       ref={setNodeRef}
@@ -47,8 +58,7 @@ function TaskCard(props) {
         props.openHistoryModal(task); 
       }}
       className={
-        "p-4 rounded-2xl border border-slate-100 mb-4 shadow-sm hover:shadow-md cursor-grab active:cursor-grabbing group transition-opacity duration-200 " +
-        (isDragging && !isOverlay ? "opacity-0" : "opacity-100") + " " +
+        "p-4 rounded-2xl border border-slate-100 mb-4 shadow-sm hover:shadow-md cursor-grab active:cursor-grabbing group transition-all duration-200 " +
         (task.status === "todo" ? "bg-[#F0F7FF]" : 
          task.status === "inprogress" ? "bg-[#FDF2F8]" : 
          task.status === "done" ? "bg-[#ECFDF5]" : 

@@ -1,4 +1,5 @@
 import { useDroppable } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import TaskCard from "./TaskCard";
 
 function Column(props) {
@@ -6,6 +7,30 @@ function Column(props) {
 
   const { setNodeRef } = useDroppable({
     id: status
+  });
+
+  const isOverdue = (task) => {
+    if (status === "done") return false;
+    if (!task.dueDate) return false;
+    const targetDate = new Date(task.dueDate);
+    const targetUTC = Date.UTC(targetDate.getUTCFullYear(), targetDate.getUTCMonth(), targetDate.getUTCDate());
+    const now = new Date();
+    const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    return (targetUTC - todayUTC) <= 0;
+  };
+
+  const sortedTasks = [...tasks].sort(function(a, b) {
+    const aOverdue = isOverdue(a);
+    const bOverdue = isOverdue(b);
+    if (aOverdue && !bOverdue) return -1;
+    if (!aOverdue && bOverdue) return 1;
+
+    const priorityOrder = { high: 1, medium: 2, low: 3 };
+    const pA = priorityOrder[a.priority?.toLowerCase()] || 4;
+    const pB = priorityOrder[b.priority?.toLowerCase()] || 4;
+    
+    if (pA !== pB) return pA - pB;
+    return (a.position || 0) - (b.position || 0);
   });
 
   return (
@@ -22,7 +47,7 @@ function Column(props) {
         (status === "todo" ? "border-blue-400/60 shadow-[0_8px_30px_rgb(59,130,246,0.05)]" : 
          status === "inprogress" ? "border-purple-400/60 shadow-[0_8px_30px_rgb(192,132,252,0.05)]" : 
          status === "done" ? "border-emerald-400/60 shadow-[0_8px_30px_rgb(52,211,153,0.05)]" : 
-         "border-amber-400/60 shadow-[0_8px_30px_rgb(251,191,36,0.05)]")
+         "border-amber-400/60 shadow-[0_8px_30_rgb(251,191,36,0.05)]")
       }
     >
       <div className={
@@ -66,27 +91,11 @@ function Column(props) {
             <p className="text-[11px] text-slate-300 mt-1">Try a different keyword</p>
           </div>
         ) : (
-          [...tasks]
-            .sort(function(a, b) {
-              const checkOverdue = (task) => {
-                if (!task.dueDate) return false;
-                const targetDate = new Date(task.dueDate);
-                const targetUTC = Date.UTC(targetDate.getUTCFullYear(), targetDate.getUTCMonth(), targetDate.getUTCDate());
-                const now = new Date();
-                const todayUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-                return (targetUTC - todayUTC) <= 0;
-              };
-
-              const aOverdue = checkOverdue(a);
-              const bOverdue = checkOverdue(b);
-              
-              if (aOverdue && !bOverdue) return -1;
-              if (!aOverdue && bOverdue) return 1;
-
-              const priorityOrder = { high: 1, medium: 2, low: 3 };
-              return (priorityOrder[a.priority] || 4) - (priorityOrder[b.priority] || 4);
-            })
-            .map(function(task) {
+          <SortableContext 
+            items={sortedTasks.map(t => t.id)} 
+            strategy={verticalListSortingStrategy}
+          >
+            {sortedTasks.map(function(task) {
               return (
                 <TaskCard
                   key={task.id}
@@ -97,7 +106,8 @@ function Column(props) {
                   currentUser={currentUser}
                 />
               );
-            })
+            })}
+          </SortableContext>
         )}
       </div>
     </div>
