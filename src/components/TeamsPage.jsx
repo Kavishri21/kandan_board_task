@@ -320,7 +320,7 @@ function DeleteTeamConfirmModal({ isOpen, onClose, team, onDeleted }) {
     try {
       await deleteTeam(team.id);
       toast.success(`Team "${team.name}" deleted.`);
-      onDeleted();
+      onDeleted(team.id);
       onClose();
     } catch (err) {
       toast.error("Failed to delete team.");
@@ -465,7 +465,7 @@ function TeamCard({ team, currentUser, allUsers, isOrgAdmin, canManageTeams, onV
 // ─────────────────────────────────────────────────────────────────────────────
 // Main TeamsPage Component
 // ─────────────────────────────────────────────────────────────────────────────
-export default function TeamsPage() {
+export default function TeamsPage({ onTeamDeleted, onTeamCreated }) {
   const { user: currentUser } = useContext(AuthContext);
   const navigate = useNavigate();
   const [teams, setTeams] = useState([]);
@@ -502,7 +502,12 @@ export default function TeamsPage() {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         allUsers={allUsers}
-        onTeamCreated={loadData}
+        onTeamCreated={() => {
+          // 1. Refresh TeamsPage list
+          loadData();
+          // 2. Also refresh the board filter dropdown in App.jsx
+          if (onTeamCreated) onTeamCreated();
+        }}
         currentUser={currentUser}
       />
       <AddMembersModal
@@ -522,7 +527,12 @@ export default function TeamsPage() {
         isOpen={!!teamToDelete}
         onClose={() => setTeamToDelete(null)}
         team={teamToDelete}
-        onDeleted={loadData}
+        onDeleted={(deletedId) => {
+          // 1. Refresh TeamsPage list
+          loadData();
+          // 2. Also refresh the board filter dropdown in App.jsx
+          if (onTeamDeleted) onTeamDeleted();
+        }}
       />
 
       {/* Page Header */}

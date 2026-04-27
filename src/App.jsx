@@ -59,6 +59,26 @@ function App() {
   const [activeFilter, setActiveFilter] = useState(null);   // null = personal board
   const [filterOpen, setFilterOpen] = useState(false);
   const filterRef = useRef(null);
+
+  // Standalone function to re-fetch and refresh the teams dropdown
+  function refreshFilterTeams() {
+    fetchTeams().then(allTeams => {
+      if (isOrgAdmin) {
+        setFilterTeams(allTeams);
+      } else if (isManager) {
+        const myTeams = allTeams.filter(t =>
+          t.createdByUserId === currentUser?.id ||
+          t.members?.some(m => m.userId === currentUser?.id && m.teamRole === "LEAD")
+        );
+        setFilterTeams(myTeams);
+      } else {
+        const myTeams = allTeams.filter(t =>
+          t.members?.some(m => m.userId === currentUser?.id)
+        );
+        setFilterTeams(myTeams);
+      }
+    }).catch(() => {});
+  }
   
   // Member drill-down states
   const [selectedMember, setSelectedMember] = useState(null);
@@ -75,25 +95,7 @@ function App() {
     }).catch(() => {});
 
     // 2. Fetch teams for filters and context
-    fetchTeams().then(allTeams => {
-      // For mentioning, we use the raw list
-      // For the board filter dropdown, we apply logic:
-      if (isOrgAdmin) {
-        setFilterTeams(allTeams);
-      } else if (isManager) {
-        const myTeams = allTeams.filter(t =>
-          t.createdByUserId === currentUser?.id ||
-          t.members?.some(m => m.userId === currentUser?.id && m.teamRole === "LEAD")
-        );
-        setFilterTeams(myTeams);
-      } else {
-        // Regular Employee: only teams they are part of
-        const myTeams = allTeams.filter(t => 
-          t.members?.some(m => m.userId === currentUser?.id)
-        );
-        setFilterTeams(myTeams);
-      }
-    }).catch(() => {});
+    refreshFilterTeams();
     
     // 3. Notification Polling
     const loadUnreadCount = () => {
@@ -623,7 +625,7 @@ function App() {
           } />
 
           <Route path="/users" element={<UsersPage />} />
-          <Route path="/teams" element={<TeamsPage />} />
+          <Route path="/teams" element={<TeamsPage onTeamDeleted={refreshFilterTeams} onTeamCreated={refreshFilterTeams} />} />
           <Route path="/teams/:teamId" element={<TeamDetailPageWrapper allTeams={filterTeams} />} />
           <Route path="/reports" element={<ReportsPage currentUser={currentUser} />} />
           <Route path="/notifications" element={<NotificationsPage />} />
