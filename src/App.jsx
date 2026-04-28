@@ -39,7 +39,7 @@ import LogoutConfirmModal from "./components/LogoutConfirmModal";
 function App() {
   const { tasks, addTask, deleteTask, openModal, selectedTask, updateTask, updateTaskStatus, closeModal, loading, error, loadTasks } = useContext(TaskContext);
   const { user: currentUser, logout } = useContext(AuthContext);
-  
+
   const [pendingBacklogTask, setPendingBacklogTask] = useState(null);
   const [historyTask, setHistoryTask] = useState(null);
   const [taskToDelete, setTaskToDelete] = useState(null);
@@ -77,13 +77,13 @@ function App() {
         );
         setFilterTeams(myTeams);
       }
-    }).catch(() => {});
+    }).catch(() => { });
   }
-  
+
   // Member drill-down states
   const [selectedMember, setSelectedMember] = useState(null);
   const [memberViewToggle, setMemberViewToggle] = useState("team"); // "team" or "personal"
-  
+
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -92,21 +92,21 @@ function App() {
     // 1. Fetch all users for @mentions
     fetchMembers().then(users => {
       setAllUsers(users);
-    }).catch(() => {});
+    }).catch(() => { });
 
     // 2. Fetch teams for filters and context
     refreshFilterTeams();
-    
+
     // 3. Notification Polling
     const loadUnreadCount = () => {
       fetchNotifications().then(notifs => {
         setUnreadNotifications(notifs.filter(n => !n.read).length);
-      }).catch(() => {});
+      }).catch(() => { });
     };
-    
+
     loadUnreadCount();
     const interval = setInterval(loadUnreadCount, 3000); // 3s polling
-    
+
     return () => clearInterval(interval);
   }, [currentUser?.id, isOrgAdmin, isManager]);
 
@@ -115,9 +115,9 @@ function App() {
     if (location.state?.openTaskId && tasks.length > 0) {
       const taskToOpen = tasks.find(t => t.id === location.state.openTaskId);
       if (taskToOpen) {
-         setHistoryTask(taskToOpen);
-         setHistoryTab("tasks"); 
-         navigate(location.pathname, { replace: true, state: {} });
+        setHistoryTask(taskToOpen);
+        setHistoryTab("tasks");
+        navigate(location.pathname, { replace: true, state: {} });
       }
     }
   }, [location.state?.openTaskId, tasks, navigate, location.pathname]);
@@ -174,7 +174,7 @@ function App() {
   let boardSubLabel = "Tasks assigned to you.";
   if (activeFilter?.type === "team") {
     if (selectedMember) {
-      boardSubLabel = memberViewToggle === "team" 
+      boardSubLabel = memberViewToggle === "team"
         ? `Tasks assigned within ${activeFilter.teamName}.`
         : `Personal tasks not assigned to any team.`;
     } else {
@@ -212,7 +212,7 @@ function App() {
     // 1. Identify destination status
     let newStatus = activeTask.status;
     const overTask = tasks.find(t => t.id === overId);
-    
+
     if (["todo", "inprogress", "done", "backlog"].includes(overId)) {
       newStatus = overId;
     } else if (overTask) {
@@ -222,7 +222,7 @@ function App() {
     // 2. Handle Priority Constraint and Reordering
     const priorityOrder = { high: 1, medium: 2, low: 3 };
     const activePriority = activeTask.priority?.toLowerCase() || "medium";
-    
+
     // Get all tasks in the destination column, sorted by priority and position
     const colTasks = tasks
       .filter(t => t.status === newStatus && t.id !== activeId)
@@ -240,11 +240,11 @@ function App() {
 
     if (overTask && overTask.id !== activeId) {
       const overPriority = overTask.priority?.toLowerCase() || "medium";
-      
+
       if (overPriority === activePriority) {
         // Drop over same priority: Calculate mid-point
         const overIndex = groupTasks.findIndex(t => t.id === overId);
-        
+
         // Vertical check: are we above or below? 
         // dnd-kit sortable handleDragEnd usually assumes a swap or insertion.
         // We'll calculate based on the index in the sorted list.
@@ -256,10 +256,10 @@ function App() {
             if (pA !== pB) return pA - pB;
             return (a.position || 0) - (b.position || 0);
           });
-        
+
         const oldIndex = allColTasks.findIndex(t => t.id === activeId);
         const targetIndex = allColTasks.findIndex(t => t.id === overId);
-        
+
         if (oldIndex !== targetIndex) {
           const newIndex = targetIndex;
           const prevTask = allColTasks[newIndex > targetIndex ? newIndex - 1 : newIndex - 1]; // This is getting complex
@@ -271,7 +271,7 @@ function App() {
         // If dragged below a lower priority task -> place at BOTTOM of its own priority group
         const activeP = priorityOrder[activePriority] || 4;
         const overP = priorityOrder[overPriority] || 4;
-        
+
         if (activeP > overP) {
           // I am lower priority than what I'm over (e.g. Medium over High)
           // Place at TOP of Medium group
@@ -323,12 +323,12 @@ function App() {
       lastValidIdx = currentColumnTasks.findLastIndex(t => isTaskOverdue(t, newStatus));
     } else {
       // Must stay in its priority group within the non-overdue section
-      firstValidIdx = currentColumnTasks.findIndex(t => 
-        !isTaskOverdue(t, newStatus) && 
+      firstValidIdx = currentColumnTasks.findIndex(t =>
+        !isTaskOverdue(t, newStatus) &&
         (t.priority?.toLowerCase() || "medium") === activePriority
       );
-      lastValidIdx = currentColumnTasks.findLastIndex(t => 
-        !isTaskOverdue(t, newStatus) && 
+      lastValidIdx = currentColumnTasks.findLastIndex(t =>
+        !isTaskOverdue(t, newStatus) &&
         (t.priority?.toLowerCase() || "medium") === activePriority
       );
     }
@@ -340,11 +340,11 @@ function App() {
     if (oldIdx !== newIdx || newStatus !== activeTask.status) {
       // Calculate new position
       if (currentColumnTasks.length === 1 && newStatus !== activeTask.status) {
-         newPosition = Number(Date.now()); // Empty column case
+        newPosition = Number(Date.now()); // Empty column case
       } else {
         const neighbors = [...currentColumnTasks.filter(t => t.id !== activeId)];
         neighbors.splice(newIdx, 0, activeTask); // Mock the move
-        
+
         const idx = newIdx;
         const prev = neighbors[idx - 1];
         const next = neighbors[idx + 1];
@@ -392,7 +392,7 @@ function App() {
 
   return (
     <div className="flex h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-100 overflow-x-hidden w-full">
-      
+
       {/* Collapsible Sidebar */}
       <Sidebar
         isCollapsed={isCollapsed}
@@ -403,7 +403,7 @@ function App() {
 
       {/* Main Kanban Content Area */}
       <main className="flex-1 overflow-x-hidden overflow-y-auto px-4 sm:px-8 xl:px-12 py-8 relative z-10 focus:outline-none">
-        
+
         {/* Mobile Header (Shows only on small screens) */}
         <div className="md:hidden flex justify-between items-center mb-6">
           <div className="font-bold text-blue-700 flex items-center gap-2">
@@ -427,9 +427,9 @@ function App() {
                 <div className="flex items-center gap-3 shrink-0">
                   {/* Search Bar */}
                   <div className="relative group hidden sm:block">
-                    <input 
-                      type="text" 
-                      placeholder="Search tasks..." 
+                    <input
+                      type="text"
+                      placeholder="Search tasks..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pl-10 pr-10 py-2.5 w-64 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400 text-slate-700"
@@ -438,7 +438,7 @@ function App() {
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                     </div>
                     {searchQuery && (
-                      <button 
+                      <button
                         onClick={() => setSearchQuery("")}
                         className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all"
                       >
@@ -452,13 +452,12 @@ function App() {
                     <div className="relative" ref={filterRef}>
                       <button
                         onClick={() => setFilterOpen(v => !v)}
-                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium border text-sm transition-all ${
-                          activeFilter
+                        className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium border text-sm transition-all ${activeFilter
                             ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
                             : "bg-white text-slate-600 border-slate-200 hover:border-indigo-400 hover:text-indigo-600"
-                        }`}
+                          }`}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" /></svg>
                         {activeFilter ? activeFilter.teamName : "My Board (Personal)"}
                         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                       </button>
@@ -468,9 +467,8 @@ function App() {
                           {/* My Board (reset) */}
                           <button
                             onClick={() => handleFilterSelect(null)}
-                            className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${
-                              !activeFilter ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
-                            }`}
+                            className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${!activeFilter ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
+                              }`}
                           >
                             My Board (Personal)
                           </button>
@@ -483,9 +481,8 @@ function App() {
                                 <button
                                   key={team.id}
                                   onClick={() => handleFilterSelect({ type: "team", teamId: team.id, teamName: team.name })}
-                                  className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${
-                                    activeFilter?.teamId === team.id ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
-                                  }`}
+                                  className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${activeFilter?.teamId === team.id ? "bg-indigo-50 text-indigo-700" : "text-slate-600 hover:bg-slate-50"
+                                    }`}
                                 >
                                   {team.name}
                                 </button>
@@ -496,7 +493,7 @@ function App() {
                       )}
                     </div>
                   )}
-                  
+
                   <AddTaskForm addTask={addTask} />
                 </div>
               </header>
@@ -520,21 +517,20 @@ function App() {
                             key={m.userId}
                             onClick={() => {
                               if (isSelected) {
-                                 // Deselect
-                                 setSelectedMember(null);
-                                 setMemberViewToggle("team");
-                                 loadTasks(activeFilter.teamId); // Load full team tasks
+                                // Deselect
+                                setSelectedMember(null);
+                                setMemberViewToggle("team");
+                                loadTasks(activeFilter.teamId); // Load full team tasks
                               } else {
-                                 // Select
-                                 setSelectedMember({ id: m.userId, name: name });
-                                 setMemberViewToggle("team");
-                                 // Client side filter handled by displayedTasks, but ensure we have team tasks
-                                 loadTasks(activeFilter.teamId); 
+                                // Select
+                                setSelectedMember({ id: m.userId, name: name });
+                                setMemberViewToggle("team");
+                                // Client side filter handled by displayedTasks, but ensure we have team tasks
+                                loadTasks(activeFilter.teamId);
                               }
                             }}
-                            className={`px-4 py-2 rounded-xl text-sm font-medium border transition-colors ${
-                              isSelected ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-200" : "bg-white text-slate-700 border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
-                            }`}
+                            className={`px-4 py-2 rounded-xl text-sm font-medium border transition-colors ${isSelected ? "bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-200" : "bg-white text-slate-700 border-slate-200 hover:border-indigo-300 hover:bg-slate-50"
+                              }`}
                           >
                             <div className="flex items-center gap-2">
                               <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${isSelected ? 'bg-white/20' : 'bg-slate-100 text-slate-500'}`}>
@@ -547,66 +543,64 @@ function App() {
                       });
                     })()}
                   </div>
-                  
+
                   {/* Member Tasks Toggle (Team vs Personal) */}
                   {selectedMember && selectedMember.id !== currentUser?.id && (
                     <div className="mt-5 flex gap-2 p-1 bg-slate-200/50 rounded-xl w-max">
-                        <button
-                          onClick={() => {
-                              setMemberViewToggle("team");
-                              loadTasks(activeFilter.teamId); // Load team tasks
-                          }}
-                          className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
-                            memberViewToggle === "team" ? "bg-white text-indigo-700 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                      <button
+                        onClick={() => {
+                          setMemberViewToggle("team");
+                          loadTasks(activeFilter.teamId); // Load team tasks
+                        }}
+                        className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${memberViewToggle === "team" ? "bg-white text-indigo-700 shadow-sm" : "text-slate-500 hover:text-slate-700"
                           }`}
-                        >
-                          Team Tasks
-                        </button>
-                        <button
-                          onClick={() => {
-                              setMemberViewToggle("personal");
-                              loadTasks(null, selectedMember.id, false); // Load personal tasks of selected member
-                          }}
-                          className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${
-                            memberViewToggle === "personal" ? "bg-white text-indigo-700 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                      >
+                        Team Tasks
+                      </button>
+                      <button
+                        onClick={() => {
+                          setMemberViewToggle("personal");
+                          loadTasks(null, selectedMember.id, false); // Load personal tasks of selected member
+                        }}
+                        className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${memberViewToggle === "personal" ? "bg-white text-indigo-700 shadow-sm" : "text-slate-500 hover:text-slate-700"
                           }`}
-                        >
-                          Personal Tasks
-                        </button>
+                      >
+                        Personal Tasks
+                      </button>
                     </div>
                   )}
                 </div>
               )}
 
-              <DndContext 
-                sensors={sensors} 
-                onDragStart={handleDragStart} 
-                onDragEnd={handleDragEnd} 
+              <DndContext
+                sensors={sensors}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
                 onDragCancel={() => setActiveId(null)}
                 modifiers={[restrictToWindowEdges]}
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-start">
                   <Column title="To Do" status="todo"
                     tasks={searchedTasks.filter(t => t.status === "todo")}
-                    deleteTask={setTaskToDelete} openModal={openModal} 
-                    openHistoryModal={(task, tab) => { setHistoryTask(task); setHistoryTab(tab || "tasks"); }} 
+                    deleteTask={setTaskToDelete} openModal={openModal}
+                    openHistoryModal={(task, tab) => { setHistoryTask(task); setHistoryTab(tab || "tasks"); }}
                     isSearching={!!searchQuery}
                     currentUser={currentUser} />
                   <Column title="In Progress" status="inprogress"
                     tasks={searchedTasks.filter(t => t.status === "inprogress")}
-                    deleteTask={setTaskToDelete} openModal={openModal} 
+                    deleteTask={setTaskToDelete} openModal={openModal}
                     openHistoryModal={(task, tab) => { setHistoryTask(task); setHistoryTab(tab || "tasks"); }}
                     isSearching={!!searchQuery}
                     currentUser={currentUser} />
                   <Column title="Done" status="done"
                     tasks={searchedTasks.filter(t => t.status === "done")}
-                    deleteTask={setTaskToDelete} openModal={openModal} 
+                    deleteTask={setTaskToDelete} openModal={openModal}
                     openHistoryModal={(task, tab) => { setHistoryTask(task); setHistoryTab(tab || "tasks"); }}
                     isSearching={!!searchQuery}
                     currentUser={currentUser} />
                   <Column title="Backlog" status="backlog"
                     tasks={searchedTasks.filter(t => t.status === "backlog")}
-                    deleteTask={setTaskToDelete} openModal={openModal} 
+                    deleteTask={setTaskToDelete} openModal={openModal}
                     openHistoryModal={(task, tab) => { setHistoryTask(task); setHistoryTab(tab || "tasks"); }}
                     isSearching={!!searchQuery}
                     currentUser={currentUser} />
@@ -614,8 +608,8 @@ function App() {
 
                 <DragOverlay dropAnimation={null}>
                   {activeId ? (
-                    <TaskCard 
-                      task={tasks.find(function(t) { return t.id === activeId; })} 
+                    <TaskCard
+                      task={tasks.find(function (t) { return t.id === activeId; })}
                       isOverlay={true}
                     />
                   ) : null}
@@ -629,13 +623,13 @@ function App() {
           <Route path="/teams/:teamId" element={<TeamDetailPageWrapper allTeams={filterTeams} />} />
           <Route path="/reports" element={<ReportsPage currentUser={currentUser} />} />
           <Route path="/notifications" element={<NotificationsPage />} />
-          
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
 
       {selectedTask && (
-        <TaskModal 
+        <TaskModal
           task={selectedTask}
           updateTask={updateTask}
           closeModal={closeModal}
@@ -645,8 +639,8 @@ function App() {
       {pendingBacklogTask && (
         <BacklogModal
           task={pendingBacklogTask}
-          closeModal={function() { setPendingBacklogTask(null); }}
-          onSave={function(updatedTaskProps) {
+          closeModal={function () { setPendingBacklogTask(null); }}
+          onSave={function (updatedTaskProps) {
             updateTask(updatedTaskProps).then(() => {
               updateTaskStatus(updatedTaskProps.id, "backlog", pendingBacklogTask.position);
               setPendingBacklogTask(null);
@@ -669,7 +663,7 @@ function App() {
             }).filter(Boolean);
           })()}
           initialTab={historyTab}
-          closeModal={function() { setHistoryTask(null); setHistoryTab("activity"); }}
+          closeModal={function () { setHistoryTask(null); setHistoryTab("activity"); }}
         />
       )}
 
@@ -687,9 +681,9 @@ function App() {
         onClose={() => setIsLogoutModalOpen(false)}
         onConfirm={logout}
       />
-      
+
     </div>
-    
+
   );
 }
 
@@ -701,11 +695,11 @@ function TeamDetailPageWrapper({ allTeams }) {
   const { teamId } = useParams();
   const navigate = useNavigate();
   const team = allTeams.find(t => t.id === teamId);
-  
+
   if (!team) {
     return <Navigate to="/teams" replace />;
   }
-  
+
   return <TeamDetailPage team={team} onBack={() => navigate("/teams")} />;
 }
 

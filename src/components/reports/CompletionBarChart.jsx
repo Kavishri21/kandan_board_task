@@ -29,8 +29,18 @@ const PRIORITY_CONFIG = [
 // ─────────────────────────────────────────────────────────────────────────────
 function CustomTooltip({ active, payload, label, mode }) {
   if (!active || !payload || payload.length === 0) return null;
-  const days = payload[0]?.value ?? 0;
+  const hours = payload[0]?.value ?? 0;
   const config = PRIORITY_CONFIG.find(p => p.label === label);
+
+  // Format: show as "Xh Ym" if under 24h, otherwise "Xd Yh"
+  const formatHours = (h) => {
+    if (h === 0) return "< 1 min";
+    if (h < 1) return `${Math.round(h * 60)} min`;
+    if (h < 24) return `${h.toFixed(1)} hrs`;
+    const days = Math.floor(h / 24);
+    const rem  = (h % 24).toFixed(0);
+    return rem > 0 ? `${days}d ${rem}h` : `${days}d`;
+  };
 
   return (
     <div className="bg-white border border-slate-200 rounded-xl shadow-lg px-4 py-3">
@@ -43,7 +53,7 @@ function CustomTooltip({ active, payload, label, mode }) {
       </div>
       <p className="text-xs text-slate-500">
         {mode === "overall" ? "Total" : "Average"} time:{" "}
-        <span className="font-bold text-slate-800">{days} days</span>
+        <span className="font-bold text-slate-800">{formatHours(hours)}</span>
       </p>
     </div>
   );
@@ -54,7 +64,15 @@ function CustomTooltip({ active, payload, label, mode }) {
 // ─────────────────────────────────────────────────────────────────────────────
 function BarLabel(props) {
   const { x, y, width, value } = props;
-  if (!value || value === 0) return null;
+  // Always render if there's any non-zero value (even sub-hour)
+  if (value == null || value <= 0) return null;
+
+  // Format label: show hrs if < 24h, else days
+  let label;
+  if (value < 1)       label = `${Math.round(value * 60)}m`;
+  else if (value < 24) label = `${value.toFixed(1)}h`;
+  else                 label = `${(value / 24).toFixed(1)}d`;
+
   return (
     <text
       x={x + width / 2}
@@ -64,7 +82,7 @@ function BarLabel(props) {
       fontSize={11}
       fontWeight={700}
     >
-      {value}d
+      {label}
     </text>
   );
 }
@@ -109,10 +127,10 @@ export default function CompletionBarChart({ tasks }) {
         <div>
           <p className="text-sm font-bold text-slate-700">Completion Time by Priority</p>
           <p className="text-xs text-slate-400 mt-0.5">
-            {doneTasks > 0
-              ? `Based on ${doneTasks} completed task${doneTasks !== 1 ? "s" : ""}`
-              : "No completed tasks in this period"}
-          </p>
+          {doneTasks > 0
+            ? `Based on ${doneTasks} completed task${doneTasks !== 1 ? "s" : ""} — time shown in hours`
+            : "No completed tasks in this period"}
+        </p>
         </div>
 
         {/* Toggle: Overall / Average */}
@@ -168,8 +186,8 @@ export default function CompletionBarChart({ tasks }) {
                 tick={{ fontSize: 11, fill: "#94a3b8", fontWeight: 500 }}
                 axisLine={false}
                 tickLine={false}
-                unit=" d"
-                width={36}
+                unit=" h"
+                width={40}
               />
 
               <Tooltip

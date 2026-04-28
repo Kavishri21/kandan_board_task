@@ -90,7 +90,7 @@ function ChangeTeamDropdown({ member, currentTeamId, allTeams, onMove }) {
         {isMoving ? (
           <span className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
         ) : (
-          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="17 1 21 5 17 9" /><path d="M3 11V9a4 4 0 0 1 4-4h14" /><polyline points="7 23 3 19 7 15" /><path d="M21 13v2a4 4 0 0 1-4 4H3" /></svg>
         )}
         Change Team
       </button>
@@ -213,8 +213,8 @@ export default function TeamDetailPage({ team, onBack }) {
               const isCreator = member.id === creatorId;
 
               return (
-                <div 
-                  key={member.id} 
+                <div
+                  key={member.id}
                   className={`bg-white px-6 py-5 flex items-center justify-between hover:bg-slate-50/50 transition-colors group
                     ${index === 0 ? 'rounded-t-2xl' : ''} 
                     ${index === teamData.members.length - 1 ? 'rounded-b-2xl' : ''}
@@ -247,9 +247,8 @@ export default function TeamDetailPage({ team, onBack }) {
                         <option value="LEAD">Lead</option>
                       </select>
                     ) : (
-                      <span className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-widest border ${
-                        memberObj.teamRole === "LEAD" ? "bg-blue-50 text-blue-600 border-blue-100" : "bg-slate-100 text-slate-600 border-slate-200"
-                      }`}>
+                      <span className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-widest border ${memberObj.teamRole === "LEAD" ? "bg-blue-50 text-blue-600 border-blue-100" : "bg-slate-100 text-slate-600 border-slate-200"
+                        }`}>
                         {memberObj.teamRole.replace("_", " ")}
                       </span>
                     )}

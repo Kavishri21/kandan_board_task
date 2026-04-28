@@ -32,8 +32,11 @@ function toLocalDateKey(date) {
 // ─────────────────────────────────────────────────────────────────────────────
 export function getCompletedDate(task) {
   if (!task.statusHistory || task.statusHistory.length === 0) return null;
-  const doneEntry = task.statusHistory.find(h => h.status === "done");
-  return doneEntry ? new Date(doneEntry.changedAt) : null;
+  // Use the LAST "done" entry — a task may have gone done → other → done again.
+  // The last done entry is the most recent completion time.
+  const doneEntries = task.statusHistory.filter(h => h.status === "done");
+  if (doneEntries.length === 0) return null;
+  return new Date(doneEntries[doneEntries.length - 1].changedAt);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -217,14 +220,16 @@ export function computeDailyCompletionData(tasks, fromDate, toDate) {
 // ─────────────────────────────────────────────────────────────────────────────
 // STEP 5: Compute completion times from done tasks (for Bar Chart)
 //
-// For each COMPLETED task, calculates how many days it took from
-// createdAt → first "done" entry in statusHistory.
+// For each COMPLETED task, calculates how many HOURS it took from
+// createdAt → last "done" entry in statusHistory.
+//
+// Unit is HOURS (not days) so tasks completed within the same day
+// are still visible on the chart instead of appearing as flat 0d bars.
 //
 // Only includes tasks that are truly done (have a "done" statusHistory entry).
-// In-progress tasks are excluded as confirmed.
 //
-// Returns: { high: [1.5, 2.0, ...], medium: [...], low: [...] }
-//           (arrays of day durations, one per completed task)
+// Returns: { high: [2.5, 48.0, ...], medium: [...], low: [...] }
+//           (arrays of hour durations, one per completed task)
 // ─────────────────────────────────────────────────────────────────────────────
 export function computeCompletionTimes(tasks) {
   const result = { high: [], medium: [], low: [] };
@@ -234,16 +239,17 @@ export function computeCompletionTimes(tasks) {
     if (!doneDate) return; // skip — not completed
 
     const createdDate = new Date(task.createdAt);
-    const daysToComplete =
-      (doneDate.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24);
+    // Calculate in HOURS for sub-day precision
+    const hoursToComplete =
+      (doneDate.getTime() - createdDate.getTime()) / (1000 * 60 * 60);
 
-    // Guard: if somehow doneDate < createdAt (data issue), skip
-    if (daysToComplete < 0) return;
+    // Guard: if somehow doneDate < createdAt (data issue), use 0
+    const hours = Math.max(0, hoursToComplete);
 
     const priority = (task.priority || "medium").toLowerCase();
-    if (priority === "high")        result.high.push(daysToComplete);
-    else if (priority === "medium") result.medium.push(daysToComplete);
-    else if (priority === "low")    result.low.push(daysToComplete);
+    if (priority === "high")        result.high.push(hours);
+    else if (priority === "medium") result.medium.push(hours);
+    else if (priority === "low")    result.low.push(hours);
   });
 
   return result;
@@ -252,31 +258,31 @@ export function computeCompletionTimes(tasks) {
 // ─────────────────────────────────────────────────────────────────────────────
 // STEP 6a: Compute OVERALL (total) completion time per priority
 //
-// Returns: { high: N, medium: N, low: N } in days (rounded to 1 decimal)
+// Returns: { high: N, medium: N, low: N } in HOURS (rounded to 1 decimal)
 // Returns 0 for priorities with no completed tasks.
 // ─────────────────────────────────────────────────────────────────────────────
 export function computeOverallTime(completionTimes) {
   const sum = arr => arr.reduce((acc, val) => acc + val, 0);
   return {
-    high:   parseFloat(sum(completionTimes.high).toFixed(2)),
-    medium: parseFloat(sum(completionTimes.medium).toFixed(2)),
-    low:    parseFloat(sum(completionTimes.low).toFixed(2)),
+    high:   parseFloat(sum(completionTimes.high).toFixed(1)),
+    medium: parseFloat(sum(completionTimes.medium).toFixed(1)),
+    low:    parseFloat(sum(completionTimes.low).toFixed(1)),
   };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // STEP 6b: Compute AVERAGE completion time per priority
 //
-// Returns: { high: N, medium: N, low: N } in days (rounded to 1 decimal)
+// Returns: { high: N, medium: N, low: N } in HOURS (rounded to 1 decimal)
 // Returns 0 for priorities with no completed tasks.
 // ─────────────────────────────────────────────────────────────────────────────
 export function computeAverageTime(completionTimes) {
   const avg = arr =>
     arr.length === 0 ? 0 : arr.reduce((acc, val) => acc + val, 0) / arr.length;
   return {
-    high:   parseFloat(avg(completionTimes.high).toFixed(2)),
-    medium: parseFloat(avg(completionTimes.medium).toFixed(2)),
-    low:    parseFloat(avg(completionTimes.low).toFixed(2)),
+    high:   parseFloat(avg(completionTimes.high).toFixed(1)),
+    medium: parseFloat(avg(completionTimes.medium).toFixed(1)),
+    low:    parseFloat(avg(completionTimes.low).toFixed(1)),
   };
 }
 
