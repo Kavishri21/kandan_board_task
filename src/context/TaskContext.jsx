@@ -22,6 +22,8 @@ function TaskProvider(props) {
   const [error, setError] = useState(null);
 
   const lastFetchParamsRef = useRef({ teamId: undefined, targetUserId: undefined, createdByMe: false });
+  // Prevents background polling from overwriting optimistic UI updates
+  const isMutatingRef = useRef(false);
 
   // ----------------------------------------------------------------
   // Load tasks — accepts optional filter params
@@ -51,9 +53,15 @@ function TaskProvider(props) {
     // that were last used (respects active manager filter).
     // No loading spinner shown — board updates quietly in background.
     const interval = setInterval(function () {
+      if (isMutatingRef.current) return; // Skip polling if a drag-and-drop or save is in progress
+      
       const { teamId, targetUserId, createdByMe } = lastFetchParamsRef.current;
       fetchTasks(teamId, targetUserId, createdByMe)
-        .then(function (data) { setTasks(data); })
+        .then(function (data) { 
+          if (!isMutatingRef.current) { // Double check in case mutation started while fetching
+            setTasks(data); 
+          }
+        })
         .catch(function (err) { console.error("Background poll error:", err); });
     }, 5000); // 5 seconds
 
@@ -65,10 +73,9 @@ function TaskProvider(props) {
   // ADD a new task (POST)
   // ----------------------------------------------------------------
   function addTask(task) {
+    isMutatingRef.current = true;
     apiCreateTask(task)
       .then(function (savedTask) {
-        // savedTask has the MongoDB-generated id (_id mapped to id)
-        // Only add to local state if the task is assigned to ME
         if (savedTask.userId === currentUser?.id) {
           setTasks(function (prev) {
             return [...prev, savedTask];
@@ -77,6 +84,9 @@ function TaskProvider(props) {
       })
       .catch(function (err) {
         console.error("Failed to create task:", err);
+      })
+      .finally(() => {
+        isMutatingRef.current = false;
       });
   }
 
@@ -102,9 +112,9 @@ function TaskProvider(props) {
   // Updates title, description, tag, priority
   // ----------------------------------------------------------------
   function updateTask(updatedTask) {
+    isMutatingRef.current = true;
     return apiUpdateTask(updatedTask.id, updatedTask)
       .then(function (savedTask) {
-        // If task was reassigned to someone else, remove it from local state
         if (savedTask.userId !== currentUser?.id) {
           setTasks(function (prev) {
             return prev.filter(function (t) { return t.id !== savedTask.id; });
@@ -125,6 +135,9 @@ function TaskProvider(props) {
       .catch(function (err) {
         console.error("Failed to update task:", err);
         throw err;
+      })
+      .finally(() => {
+        isMutatingRef.current = false;
       });
   }
 
@@ -134,6 +147,8 @@ function TaskProvider(props) {
   //   Backend records new status + timestamp + statusHistory entry
   // ----------------------------------------------------------------
   function updateTaskStatus(taskId, newStatus, newPosition = null) {
+    isMutatingRef.current = true;
+    
     // Optimistic update — update UI immediately, sync with backend
     setTasks(function (prev) {
       return prev.map(function (task) {
@@ -150,7 +165,7 @@ function TaskProvider(props) {
 
     return apiUpdateTaskStatus(taskId, newStatus, newPosition)
       .then(function (savedTask) {
-        // Sync with what the backend actually saved (includes updatedAt and position)
+        // Sync with what the backend actually saved
         setTasks(function (prev) {
           return prev.map(function (task) {
             if (task.id === savedTask.id) {
@@ -163,8 +178,11 @@ function TaskProvider(props) {
       .catch(function (err) {
         console.error("Failed to update task status:", err);
         // Rollback: re-fetch the board from backend on failure
-        const { teamId, createdByMe } = lastFetchParamsRef.current;
-        fetchTasks(teamId, createdByMe).then(setTasks);
+        const { teamId, targetUserId, createdByMe } = lastFetchParamsRef.current;
+        fetchTasks(teamId, targetUserId, createdByMe).then(setTasks);
+      })
+      .finally(() => {
+        isMutatingRef.current = false;
       });
   }
 

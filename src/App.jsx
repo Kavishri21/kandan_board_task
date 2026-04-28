@@ -356,7 +356,13 @@ function App() {
         } else if (!next) {
           newPosition = prev.position + 1000;
         } else {
-          newPosition = (prev.position + next.position) / 2;
+          const gap = next.position - prev.position;
+          if (gap < 0.00001) {
+            // Prevent precision loss by enforcing a minimal gap offset
+            newPosition = prev.position + (gap / 2);
+          } else {
+            newPosition = (prev.position + next.position) / 2;
+          }
         }
       }
 
